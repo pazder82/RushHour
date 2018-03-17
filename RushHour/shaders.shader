@@ -1,8 +1,8 @@
 cbuffer ConstantBuffer {
-	float4x4 world;
-	float4x4 rotation;
-	float4x4 view;
-	float4x4 projection;
+	matrix world;
+	matrix rotation;
+	matrix view;
+	matrix projection;
 	float4 lightvec; // the diffuse light's vector
 	float4 lightcol; // the diffuse light's color
 	float4 ambientcol; // the ambient light's color

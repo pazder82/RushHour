@@ -16,6 +16,8 @@ extern ID3D11RenderTargetView *backbuffer;    // backbuffer
 extern ID3D11DepthStencilView *zbuffer;       // depth buffer
 extern ID3D11Buffer *pVBuffer;                // vertex buffer
 extern ID3D11InputLayout *pLayout;            // layout
+extern ID3D11RasterizerState *pRS;            // the default rasterizer state
+extern ID3D11SamplerState *pSS;               // sampler state
 
 struct VERTEX { 
 	DirectX::XMFLOAT3 pos;
@@ -23,10 +25,10 @@ struct VERTEX {
 	DirectX::XMFLOAT2 textCoord;
 };
 struct CBUFFER {
-	D3DMATRIX world;
-	DirectX::XMFLOAT4X4  rotation;
-	D3DMATRIX view;
-	D3DMATRIX projection;
+	DirectX::XMFLOAT4X4 world;
+	DirectX::XMFLOAT4X4 rotation;
+	DirectX::XMFLOAT4X4 view;
+	DirectX::XMFLOAT4X4 projection;
 	DirectX::XMVECTOR diffuseVector;
 	DirectX::XMVECTOR diffuseColor;
 	DirectX::XMVECTOR ambientColor;

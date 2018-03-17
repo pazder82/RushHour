@@ -16,6 +16,10 @@ ID3D11Buffer *pCBuffer;                // constant buffer
 ID3D11Buffer *pIBuffer;                // index buffer
 ID3D11ShaderResourceView *pTexture;    // texture buffer
 
+// State objects
+ID3D11RasterizerState *pRS;            // the default rasterizer state
+ID3D11SamplerState *pSS;               // sampler state
+
 void CreateDevice(HWND hWnd) {
 	DXGI_SWAP_CHAIN_DESC scd;
 	ZeroMemory(&scd, sizeof(DXGI_SWAP_CHAIN_DESC));
@@ -28,7 +32,7 @@ void CreateDevice(HWND hWnd) {
 	scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;      // how swap chain is to be used
 	scd.OutputWindow = hWnd;                                // the window to be used
 	scd.SampleDesc.Count = 4;                               // how many multisamples
-	scd.Windowed = FALSE;                                    // windowed/full-screen mode
+	scd.Windowed = RUNINWINDOW;                             // windowed/full-screen mode
 	scd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;     // allow full-screen switching by Alt-Enter
 
     // create a device, device context and swap chain using the information in the scd struct
@@ -161,6 +165,40 @@ void LoadTextures() {
 	D3DX11CreateShaderResourceViewFromFile(dev, L"t.jpg", NULL, NULL, &pTexture, NULL);
 }
 
+void InitRasterizer() {
+	D3D11_RASTERIZER_DESC rd;
+	rd.FillMode = D3D11_FILL_SOLID;
+	rd.CullMode = D3D11_CULL_BACK;
+	rd.FrontCounterClockwise = FALSE;
+	rd.DepthClipEnable = TRUE;
+	rd.ScissorEnable = FALSE;
+	rd.AntialiasedLineEnable = FALSE;
+	rd.MultisampleEnable = FALSE;
+	rd.DepthBias = 0;
+	rd.DepthBiasClamp = 0.0f;
+	rd.SlopeScaledDepthBias = 0.0f;
+	dev->CreateRasterizerState(&rd, &pRS);
+}
+
+void InitSampler() {
+	D3D11_SAMPLER_DESC sd;
+	ZeroMemory(&sd, sizeof(sd));
+	sd.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	sd.MaxAnisotropy = 16;
+	sd.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sd.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sd.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sd.BorderColor[0] = 0.0f;
+	sd.BorderColor[1] = 0.0f;
+	sd.BorderColor[2] = 0.0f;
+	sd.BorderColor[3] = 0.0f;
+	sd.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sd.MinLOD = 0.0f;
+	sd.MaxLOD = FLT_MAX;
+	sd.MipLODBias = 0.0f;
+	dev->CreateSamplerState(&sd, &pSS);
+}
+
 // this function initializes and prepares Direct3D for use
 void InitD3D(HWND hWnd) {
 	CreateDevice(hWnd);
@@ -169,9 +207,8 @@ void InitD3D(HWND hWnd) {
 	SetViewport();
 	LoadShaders();
 	CreateConstantBuffer();
-//	CreateVertexBuffer();
-//	CreateIndexBuffer();
-//	LoadTextures();
+	InitRasterizer();
+	InitSampler();
 }
 
 // this is the function that cleans up Direct3D and COM
@@ -189,6 +226,8 @@ void CleanD3D() {
 	pTexture->Release();
 	swapchain->Release();
 	backbuffer->Release();
+	pRS->Release();
+	pSS->Release();
 	dev->Release();
 	devcon->Release();
 }

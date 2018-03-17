@@ -193,32 +193,27 @@ void Game::UnlockActiveVehicle() {
 // Renders one frame using the vertex and pixel shaders.
 void Game::Render() {
 	CBUFFER cBuffer;
-	D3DXMATRIX matRotate, matView, matPerspective;
-	D3DXMATRIX matFinal;
+	XMMATRIX matView, matPerspective;
 
-	// create a view matrix
-	D3DXMatrixLookAtLH(&matView,
-		&D3DXVECTOR3(0.0f, 4.0f, 10.0f),   // the camera position
-		&D3DXVECTOR3(0.0f, 0.0f, 0.0f),    // the look-at position
-		&D3DXVECTOR3(0.0f, 1.0f, 0.0f));   // the up direction
-	cBuffer.view = matView;
+	//Set the View matrix
+	matView = XMMatrixLookAtLH(
+		XMVectorSet(0.0f, 4.0f, 10.0f, 0.0f),   // the camera position
+		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),    // the look-at position
+		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)   // the up direction
+	);
+	XMStoreFloat4x4(&cBuffer.view, matView);
 
 	// create a projection matrix
-	D3DXMatrixPerspectiveFovLH(&matPerspective, (FLOAT)D3DXToRadian(45), (FLOAT)SCREEN_WIDTH / (FLOAT)SCREEN_HEIGHT, 1.0f, 100.0f);
-	cBuffer.projection = matPerspective;
+	matPerspective = XMMatrixPerspectiveFovLH((FLOAT)D3DXToRadian(45), (FLOAT)SCREEN_WIDTH / (FLOAT)SCREEN_HEIGHT, 1.0f, 100.0f);
+	XMStoreFloat4x4(&cBuffer.projection, matPerspective);
 
 	cBuffer.diffuseVector = XMVectorSet(-1.0f, 1.0f, 1.0f, 0.0f);
 	cBuffer.diffuseColor = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
 	cBuffer.ambientColor = XMVectorSet(_ambientColorIntensity, _ambientColorIntensity, _ambientColorIntensity, 1.0f);
 
-	/*
-	XMFLOAT4X4 matOrientation = XMFLOAT4X4(DX::DeviceResources().GetOrientationTransform3D());
-	XMStoreFloat4x4(&matProjection, XMLoadFloat4x4(&matOrientation) * XMLoadFloat4x4(&(XMFLOAT4X4(matOrientation))));
-	cBuffer.projection = matProjection;
-	*/
-
 	// clear the back buffer to a deep blue
-	devcon->ClearRenderTargetView(backbuffer, D3DXCOLOR(0.0f, 0.2f, 0.4f, 1.0f));
+	FLOAT bgColor[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
+	devcon->ClearRenderTargetView(backbuffer, bgColor);
 
 	// clear the depth buffer
 	devcon->ClearDepthStencilView(zbuffer, D3D11_CLEAR_DEPTH, 1.0f, 0);
@@ -236,6 +231,8 @@ void Game::Render() {
 
 	// select texture
 	devcon->PSSetShaderResources(0, 1, &pTexture);
+	devcon->RSSetState(pRS);
+	devcon->PSSetSamplers(0, 1, &pSS);
 
 	// Draw model instances
 	for (auto it = _minstances.begin(); it != _minstances.end(); it++) {
@@ -243,9 +240,8 @@ void Game::Render() {
 
 		// Store instance transformation into constant buffer
 		XMMATRIX worldMatrix = mi.GetTransformation() * _worldOffset * _rotation;
-		D3DMATRIX matWorld = *reinterpret_cast<D3DXMATRIX*>(&worldMatrix) * matView * matPerspective;
-		cBuffer.world = matWorld;
-		XMStoreFloat4x4(&(cBuffer.rotation), _rotation * mi.GetInitRotation());
+		XMStoreFloat4x4(&cBuffer.world, worldMatrix * matView * matPerspective);
+		XMStoreFloat4x4(&(cBuffer.rotation), mi.GetInitRotation() * _rotation);
 		cBuffer.diffuseColor = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
 		cBuffer.ambientColor = XMVectorSet(_ambientColorIntensity, _ambientColorIntensity, _ambientColorIntensity, 1.0f);
 		// Send constant buffer
@@ -264,9 +260,8 @@ void Game::Render() {
 		}
 		// Store vehicle transformation into constant buffer
 		XMMATRIX worldMatrix = mi.GetTransformation() * _worldOffset * _rotation;
-		D3DMATRIX matWorld = *reinterpret_cast<D3DXMATRIX*>(&worldMatrix) * matView * matPerspective;
-		cBuffer.world = matWorld;
-		XMStoreFloat4x4(&(cBuffer.rotation), _rotation * mi.GetInitRotation());
+		XMStoreFloat4x4(&cBuffer.world, worldMatrix * matView * matPerspective);
+		XMStoreFloat4x4(&(cBuffer.rotation), mi.GetInitRotation() * _rotation);
 		// Store vehicle color into constant buffer
 		XMVECTOR vehicleColor = mi.GetColor();
 		cBuffer.diffuseColor = vehicleColor;
@@ -289,25 +284,26 @@ void Game::Render() {
 
 void Game::Init() {
 	// Load all models
-	_models.emplace(make_pair(string("bus"), Model("bus2.obj")));
+	_models.emplace(make_pair(string("bus"), Model("bus.obj")));
 	_models.emplace(make_pair(string("car"), Model("taxi_cab.obj")));
-	_models.emplace(make_pair(string("board"), Model("board.obj")));
+	_models.emplace(make_pair(string("board"), Model("board.3DS")));
 	_models.emplace(make_pair(string("wall"), Model("oldWall.obj")));
 
 	// Create base model instances
 	const float carScale = 0.008f;
 	const float busScale = 0.11f;
-	const float boardScale = 0.06f;
+	const float boardScale1 = 1.0f;
+	const float boardScale2 = 0.7f;
 	const float wallScale = 0.1f;
 	Vehicle miCar(_models.at("car"), XMMatrixScaling(carScale, carScale, carScale), XMVectorSet(0.5f, 0.0f, 0.0f, 0.0f), true, CARLEN);
 	Vehicle miBus(_models.at("bus"), XMMatrixScaling(busScale, busScale, busScale), XMVectorSet(1.2f, 0.0f, 0.0f, 0.0f), false, BUSLEN);
-	ModelInstance miBoard(_models.at("board"), XMMatrixScaling(boardScale, boardScale, boardScale), XMVectorSet(-1.5f, -0.17f, -0.9f, 0.0f), XMMatrixIdentity()/*XMMatrixRotationX(D3DXToRadian(180))*/);
+	ModelInstance miBoard(_models.at("board"), XMMatrixScaling(boardScale1, boardScale1, boardScale2), XMVectorSet(-0.5f, 0.0f, -0.5f, 0.0f), XMMatrixRotationX(XMConvertToRadians(90.0f)));
 	ModelInstance miWall(_models.at("wall"), XMMatrixScaling(wallScale, wallScale, wallScale), XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f), XMMatrixIdentity());
 
 	// Create base board as copy of base instance miBoard
 	_minstances.insert(make_pair(string("board"), miBoard));
 	MI(board).SetPosition(0, 0);
-	MI(board).SetOrientation(ModelInstance::ZAxis);
+	MI(board).SetOrientation(ModelInstance::XAxis);
 
 	// Create walls as copies of base instance miWall
 	_minstances.insert(make_pair(string("wall"), miWall));
