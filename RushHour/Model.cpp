@@ -8,7 +8,6 @@ std::vector<UINT> Model::_objectIndices;
 
 Model::Model(const char* pFile) {
 	const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
-	// In next command I have removed GenSmoothNormals flag because if the model has no normals, the generated normals are inverted
 	_pScene = _imp.ReadFile(pFile, /*aiProcess_CalcTangentSpace |*/ aiProcess_FixInfacingNormals /*	| aiProcess_MakeLeftHanded */ | 
 		aiProcess_GenSmoothNormals | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_SortByPType);
 	if (!_pScene) {
