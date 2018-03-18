@@ -9,7 +9,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd taxi_cab.tga
+map_Kd taxi_cab.jpg
 #
 # Multi/Sub smdimportmtl done 
 #
@@ -22,7 +22,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd car_glass.tga
+map_Kd car_glass.jpg
 #
 # Multi/Sub smdimportmtl done 
 #

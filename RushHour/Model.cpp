@@ -70,12 +70,13 @@ Model::Model(const char* pFile) {
 							if (me._pTexture == nullptr) {
 								CreateDDSTextureFromFile(dev, nullptr, textureFile, nullptr, &(me._pTexture), 0);
 							}
-							if (me._pTexture == nullptr) {
-								CreateWICTextureFromFile(dev, nullptr, L"t.jpg", nullptr, &(me._pTexture), 0);
-							}
 							// remove following line if shared_ptr used
 							delete[] wcTextureFile;
 						}
+					}
+					// If no texture found, use the default one
+					if (me._pTexture == nullptr) {
+						CreateWICTextureFromFile(dev, nullptr, L"default.jpg", nullptr, &(me._pTexture), 0);
 					}
 					_entries.push_back(me);
 				}
