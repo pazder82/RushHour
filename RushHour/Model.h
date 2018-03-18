@@ -11,6 +11,7 @@
 #include "assimp\postprocess.h"
 #include "assimp\scene.h"
 
+
 class Model {
 private:
 #define INVALID_MATERIAL 0xFFFFFFFF
@@ -20,12 +21,14 @@ private:
 			_baseVertex = 0;
 			_baseIndex = 0;
 			_materialIndex = INVALID_MATERIAL;
+			_pTexture = nullptr;
 		}
 
 		unsigned int _numIndices;
 		unsigned int _baseVertex;
 		unsigned int _baseIndex;
 		unsigned int _materialIndex;
+		ID3D11ShaderResourceView* _pTexture;    // texture buffer
 	};
 
 	/* Common vertex and index buffer for all models */

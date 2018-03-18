@@ -14,7 +14,6 @@ ID3D11Buffer *pVBuffer;                // vertex buffer
 ID3D11InputLayout *pLayout;            // layout
 ID3D11Buffer *pCBuffer;                // constant buffer
 ID3D11Buffer *pIBuffer;                // index buffer
-ID3D11ShaderResourceView *pTexture;    // texture buffer
 
 // State objects
 ID3D11RasterizerState *pRS;            // the default rasterizer state
@@ -89,14 +88,9 @@ void SetViewport() {
 
 void LoadShaders() {
     // load and compile vertex and pixel shader
-    ID3D10Blob *VS, *PS, *Errors;
-    D3DX11CompileFromFile(L"shaders.shader", 0, 0, "VShader", "vs_4_0", 0, 0, 0, &VS, &Errors, 0);
-	if (Errors)
-		MessageBox(NULL, L"The vertex shader failed to compile.", L"Error", MB_OK);
-	ZeroMemory(&Errors, sizeof(Errors));
-    D3DX11CompileFromFile(L"shaders.shader", 0, 0, "PShader", "ps_4_0", 0, 0, 0, &PS, &Errors, 0);
-	if (Errors)
-		MessageBox(NULL, L"The pixel shader failed to compile.", L"Error", MB_OK);
+    ID3D10Blob *VS, *PS;
+	D3DCompileFromFile(L"shaders.shader", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VShader", "vs_4_0", 0, 0, &VS, NULL);
+	D3DCompileFromFile(L"shaders.shader", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PShader", "ps_4_0", 0, 0, &PS, NULL);
     dev->CreateVertexShader(VS->GetBufferPointer(), VS->GetBufferSize(), NULL, &pVS);
     dev->CreatePixelShader(PS->GetBufferPointer(), PS->GetBufferSize(), NULL, &pPS);
     devcon->VSSetShader(pVS, 0, 0);
@@ -160,11 +154,6 @@ void CreateIndexBuffer(std::vector<UINT> OurIndices) {
     devcon->Unmap(pIBuffer, NULL);
 }
 
-void LoadTextures() {
-	// read the texture
-	D3DX11CreateShaderResourceViewFromFile(dev, L"t.jpg", NULL, NULL, &pTexture, NULL);
-}
-
 void InitRasterizer() {
 	D3D11_RASTERIZER_DESC rd;
 	rd.FillMode = D3D11_FILL_SOLID;
@@ -223,7 +212,6 @@ void CleanD3D() {
 	pVBuffer->Release();
 	pIBuffer->Release();
 	pCBuffer->Release();
-	pTexture->Release();
 	swapchain->Release();
 	backbuffer->Release();
 	pRS->Release();

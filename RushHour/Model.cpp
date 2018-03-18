@@ -1,7 +1,11 @@
 #include "stdafx.h"
 #include "Model.h"
+#include <WICTextureLoader.h>
+#include <DDSTextureLoader.h>
+
 
 using namespace std;
+using namespace DirectX;
 
 std::vector<VERTEX> Model::_objectVertices;
 std::vector<UINT> Model::_objectIndices;
@@ -15,26 +19,27 @@ Model::Model(const char* pFile) {
 		if (_pScene->mNumMeshes < 1) {
 		}
 		else {
+			// Process all meshes
 			for (unsigned int m = 0; m < _pScene->mNumMeshes; m++) {
 				_pMesh = _pScene->mMeshes[m];
 				MeshEntry me;
 				me._baseVertex = Model::_objectVertices.size();
 				me._baseIndex = _objectIndices.size();
-				if (!_pMesh) {
-				}
-				else {
+				if (_pMesh) {
+					// Load vertices
 					Model::_objectVertices.reserve(Model::_objectVertices.size() + _pMesh->mNumVertices);
 					for (unsigned int i = 0; i < _pMesh->mNumVertices; i++) {
 						const aiVector3D* pPos = &(_pMesh->mVertices[i]);
 						const aiVector3D* pNormal = (_pMesh->mNormals != nullptr) ? &(_pMesh->mNormals[i]) : &Zero3D;
-						//const aiVector3D* pTexCoord = _pMesh->HasTextureCoords(0) ? &(_pMesh->mTextureCoords[0][i]) : &Zero3D;
-						const aiVector3D* pTexCoord = &Zero3D;
+						const aiVector3D* pTexCoord = (_pMesh->HasTextureCoords(0)) ? &(_pMesh->mTextureCoords[0][i]) : &Zero3D;
 						VERTEX v;
 						v.pos.x = pPos->x; v.pos.y = pPos->y; v.pos.z = pPos->z;
 						v.normal.x = pNormal->x; v.normal.y = pNormal->y; v.normal.z = pNormal->z;
 						v.textCoord.x = pTexCoord->x; v.textCoord.y = pTexCoord->y;
 						Model::_objectVertices.push_back(v);
 					}
+
+					// Load indices
 					_objectIndices.reserve(_objectIndices.size() + (_pMesh->mNumFaces * 3));
 					for (unsigned int i = 0; i < _pMesh->mNumFaces; i++) {
 						if (_pMesh->mFaces[i].mNumIndices == 3) {
@@ -42,6 +47,34 @@ Model::Model(const char* pFile) {
 							_objectIndices.push_back(_pMesh->mFaces[i].mIndices[1]);
 							_objectIndices.push_back(_pMesh->mFaces[i].mIndices[2]);
 							me._numIndices += 3;
+						}
+					}
+
+					// Process material of the mesh
+					if (_pScene->HasMaterials()) {
+						aiMaterial* material = _pScene->mMaterials[_pMesh->mMaterialIndex];
+						aiString aiTextureFile;
+						me._materialIndex = _pMesh->mMaterialIndex;
+						// Load texture file
+						if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
+							material->GetTexture(aiTextureType_DIFFUSE, 0, &aiTextureFile);
+							// Convert aiString to LPWSTR
+							size_t size = strlen(aiTextureFile.C_Str()) + 1; // plus null
+							wchar_t* wcTextureFile = new wchar_t[size];
+							// Following line is for unknown reason wrong - compiler for unkown reason complains that shared_ptd is not a part of std.
+							//std::shared_ptr<wchar_t> sp(wcTextureFile, std::default_delete<wchar_t[]>());
+							size_t outSize;
+							mbstowcs_s(&outSize, wcTextureFile, size, aiTextureFile.C_Str(), size - 1);
+							LPWSTR textureFile = wcTextureFile;
+							CreateWICTextureFromFile(dev, nullptr, textureFile, nullptr, &(me._pTexture), 0);
+							if (me._pTexture == nullptr) {
+								CreateDDSTextureFromFile(dev, nullptr, textureFile, nullptr, &(me._pTexture), 0);
+							}
+							if (me._pTexture == nullptr) {
+								CreateWICTextureFromFile(dev, nullptr, L"t.jpg", nullptr, &(me._pTexture), 0);
+							}
+							// remove following line if shared_ptr used
+							delete[] wcTextureFile;
 						}
 					}
 					_entries.push_back(me);
@@ -53,4 +86,9 @@ Model::Model(const char* pFile) {
 
 
 Model::~Model() {
+	for (auto i : _entries) {
+		if (i._pTexture) {
+			i._pTexture->Release();
+		}
+	}
 }

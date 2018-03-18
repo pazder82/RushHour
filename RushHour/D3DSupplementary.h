@@ -2,8 +2,9 @@
 #define __d3dsupplementary__
 
 #include <d3d11.h>
-#include <d3dx11.h>
-#include <d3dx10.h>
+#include <d3dcompiler.h>
+//#include <d3dx11.h>
+//#include <d3dx10.h>
 #include <directxmath.h>
 #include <vector>
 
@@ -35,7 +36,6 @@ struct CBUFFER {
 };
 extern ID3D11Buffer *pCBuffer;                // constant buffer
 extern ID3D11Buffer *pIBuffer;                // index buffer
-extern ID3D11ShaderResourceView *pTexture;    // texture buffer
 
 
 void InitD3D(HWND hWnd);     // sets up and initializes Direct3D

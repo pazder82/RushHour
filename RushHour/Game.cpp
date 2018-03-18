@@ -204,7 +204,7 @@ void Game::Render() {
 	XMStoreFloat4x4(&cBuffer.view, matView);
 
 	// create a projection matrix
-	matPerspective = XMMatrixPerspectiveFovLH((FLOAT)D3DXToRadian(45), (FLOAT)SCREEN_WIDTH / (FLOAT)SCREEN_HEIGHT, 1.0f, 100.0f);
+	matPerspective = XMMatrixPerspectiveFovLH((FLOAT)XMConvertToRadians(45), (FLOAT)SCREEN_WIDTH / (FLOAT)SCREEN_HEIGHT, 1.0f, 100.0f);
 	XMStoreFloat4x4(&cBuffer.projection, matPerspective);
 
 	cBuffer.diffuseVector = XMVectorSet(-1.0f, 1.0f, 1.0f, 0.0f);
@@ -226,11 +226,9 @@ void Game::Render() {
 
 	// select which primtive type we are using
 	devcon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
 	devcon->IASetInputLayout(pLayout);
 
-	// select texture
-	devcon->PSSetShaderResources(0, 1, &pTexture);
+	// select Rasterizer and Sampler configuration
 	devcon->RSSetState(pRS);
 	devcon->PSSetSamplers(0, 1, &pSS);
 
@@ -248,6 +246,8 @@ void Game::Render() {
 		devcon->UpdateSubresource(pCBuffer, 0, 0, &cBuffer, 0, 0);
 
 		for (auto i : mi.GetModel().GetMeshEntries()) {
+			// select texture
+			devcon->PSSetShaderResources(0, 1, &i._pTexture);
 			devcon->DrawIndexed(i._numIndices, i._baseIndex, i._baseVertex);
 		}
 	}
@@ -274,6 +274,8 @@ void Game::Render() {
 		devcon->UpdateSubresource(pCBuffer, 0, 0, &cBuffer, 0, 0);
 
 		for (auto i : mi.GetModel().GetMeshEntries()) {
+			// select texture
+			devcon->PSSetShaderResources(0, 1, &i._pTexture);
 			devcon->DrawIndexed(i._numIndices, i._baseIndex, i._baseVertex);
 		}
 	}
@@ -378,11 +380,6 @@ void Game::Init() {
 	/* DEBUG END */
 	// Select first active vehicle
 	this->SetNextActiveVehicle();
-
-	/* HOP TODO - vyhodit do samostatne tridy */
-	// load the texture
-	LoadTextures();
-	/*HOP end*/
 
 	// Once both shaders are loaded, create the mesh.
 	CreateVertexBuffer(Model::GetModelVertices());
