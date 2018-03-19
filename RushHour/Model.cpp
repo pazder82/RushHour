@@ -2,7 +2,7 @@
 #include "Model.h"
 #include <WICTextureLoader.h>
 #include <DDSTextureLoader.h>
-
+#include <memory>
 
 using namespace std;
 using namespace DirectX;
@@ -12,7 +12,7 @@ std::vector<UINT> Model::_objectIndices;
 
 Model::Model(const char* pFile) {
 	const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
-	_pScene = _imp.ReadFile(pFile, /*aiProcess_CalcTangentSpace |*/ aiProcess_FixInfacingNormals /*	| aiProcess_MakeLeftHanded */ | 
+	_pScene = _imp.ReadFile(pFile, aiProcess_FlipUVs | aiProcess_FixInfacingNormals | aiProcess_MakeLeftHanded |
 		aiProcess_GenSmoothNormals | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_SortByPType);
 	if (!_pScene) {
 	}else {
@@ -61,8 +61,7 @@ Model::Model(const char* pFile) {
 							// Convert aiString to LPWSTR
 							size_t size = strlen(aiTextureFile.C_Str()) + 1; // plus null
 							wchar_t* wcTextureFile = new wchar_t[size];
-							// Following line is for unknown reason wrong - compiler for unkown reason complains that shared_ptd is not a part of std.
-							//std::shared_ptr<wchar_t> sp(wcTextureFile, std::default_delete<wchar_t[]>());
+							std::shared_ptr<wchar_t> sp(wcTextureFile, std::default_delete<wchar_t[]>());
 							size_t outSize;
 							mbstowcs_s(&outSize, wcTextureFile, size, aiTextureFile.C_Str(), size - 1);
 							LPWSTR textureFile = wcTextureFile;
@@ -70,8 +69,6 @@ Model::Model(const char* pFile) {
 							if (me._pTexture == nullptr) {
 								CreateDDSTextureFromFile(dev, nullptr, textureFile, nullptr, &(me._pTexture), 0);
 							}
-							// remove following line if shared_ptr used
-							delete[] wcTextureFile;
 						}
 					}
 					// If no texture found, use the default one

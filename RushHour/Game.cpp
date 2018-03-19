@@ -292,15 +292,16 @@ void Game::Init() {
 	_models.emplace(make_pair(string("wall"), Model("oldWall.obj")));
 
 	// Create base model instances
-	const float carScale = 0.008f;
-	const float busScale = 0.11f;
+	const float carScale = 0.0075f;
+	const float busScale = 0.105f;
 	const float boardScale1 = 1.0f;
-	const float boardScale2 = 0.7f;
-	const float wallScale = 0.1f;
-	Vehicle miCar(_models.at("car"), XMMatrixScaling(carScale, carScale, carScale), XMVectorSet(0.5f, 0.0f, 0.0f, 0.0f), true, CARLEN);
-	Vehicle miBus(_models.at("bus"), XMMatrixScaling(busScale, busScale, busScale), XMVectorSet(1.2f, 0.0f, 0.0f, 0.0f), false, BUSLEN);
-	ModelInstance miBoard(_models.at("board"), XMMatrixScaling(boardScale1, boardScale1, boardScale2), XMVectorSet(-0.5f, 0.0f, -0.5f, 0.0f), XMMatrixRotationX(XMConvertToRadians(90.0f)));
-	ModelInstance miWall(_models.at("wall"), XMMatrixScaling(wallScale, wallScale, wallScale), XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f), XMMatrixIdentity());
+	const float boardScale2 = 0.73f;
+	const float wallScale = 0.1253f;
+	Vehicle miCar(_models.at("car"), XMMatrixScaling(carScale, carScale, carScale), XMVectorSet(0.5f, 0.0f, 0.0f, 0.0f), false, CARLEN);
+	Vehicle miBus(_models.at("bus"), XMMatrixScaling(busScale, busScale, busScale), XMVectorSet(1.2f, 0.0f, 0.0f, 0.0f), true, BUSLEN);
+	ModelInstance miBoard(_models.at("board"), XMMatrixScaling(boardScale1, boardScale1, boardScale2), XMVectorSet(-0.5f, -0.23f, -0.38f, 0.0f), XMMatrixRotationX(XMConvertToRadians(90.0f)));
+	ModelInstance miWallZ(_models.at("wall"), XMMatrixScaling(wallScale, wallScale, wallScale), XMVectorSet(0.57f, 0.0f, 0.49f, 0.0f), XMMatrixIdentity());
+	ModelInstance miWallX(_models.at("wall"), XMMatrixScaling(wallScale, wallScale, wallScale), XMVectorSet(0.55f, 0.0f, 0.64f, 0.0f), XMMatrixIdentity());
 
 	// Create base board as copy of base instance miBoard
 	_minstances.insert(make_pair(string("board"), miBoard));
@@ -308,9 +309,91 @@ void Game::Init() {
 	MI(board).SetOrientation(ModelInstance::XAxis);
 
 	// Create walls as copies of base instance miWall
-	_minstances.insert(make_pair(string("wall"), miWall));
-	MI(wall).SetPosition(-4, -4);
-	MI(wall).SetOrientation(ModelInstance::ZAxis);
+	// SIDE 1
+	_minstances.insert(make_pair(string("wall1"), miWallZ));
+	_minstances.insert(make_pair(string("wall2"), miWallZ));
+	_minstances.insert(make_pair(string("wall3"), miWallZ));
+	_minstances.insert(make_pair(string("wall4"), miWallZ));
+	_minstances.insert(make_pair(string("wall5"), miWallZ));
+	_minstances.insert(make_pair(string("wall6"), miWallZ));
+	_minstances.insert(make_pair(string("wall7"), miWallZ));
+	MI(wall1).SetPosition(-4, -4);
+	MI(wall1).SetOrientation(ModelInstance::ZAxis);
+	MI(wall2).SetPosition(-3, -4);
+	MI(wall2).SetOrientation(ModelInstance::ZAxis);
+	MI(wall3).SetPosition(-2, -4);
+	MI(wall3).SetOrientation(ModelInstance::ZAxis);
+	MI(wall4).SetPosition(-1, -4);
+	MI(wall4).SetOrientation(ModelInstance::ZAxis);
+	MI(wall5).SetPosition(0, -4);
+	MI(wall5).SetOrientation(ModelInstance::ZAxis);
+	MI(wall6).SetPosition(1, -4);
+	MI(wall6).SetOrientation(ModelInstance::ZAxis);
+	MI(wall7).SetPosition(2, -4);
+	MI(wall7).SetOrientation(ModelInstance::ZAxis);
+
+	// SIDE 2
+	_minstances.insert(make_pair(string("wall8"), miWallX));
+	_minstances.insert(make_pair(string("wall9"), miWallX));
+	_minstances.insert(make_pair(string("wall10"), miWallX));
+	_minstances.insert(make_pair(string("wall11"), miWallX));
+	_minstances.insert(make_pair(string("wall12"), miWallX));
+	_minstances.insert(make_pair(string("wall13"), miWallX));
+	_minstances.insert(make_pair(string("wall14"), miWallX));
+	MI(wall8).SetPosition(-4, -4);
+	MI(wall8).SetOrientation(ModelInstance::XAxis);
+	MI(wall9).SetPosition(-4, -3);
+	MI(wall9).SetOrientation(ModelInstance::XAxis);
+	MI(wall10).SetPosition(-4, -2);
+	MI(wall10).SetOrientation(ModelInstance::XAxis);
+	MI(wall11).SetPosition(-4, -1);
+	MI(wall11).SetOrientation(ModelInstance::XAxis);
+	MI(wall12).SetPosition(-4, 0);
+	MI(wall12).SetOrientation(ModelInstance::XAxis);
+	MI(wall13).SetPosition(-4, 1);
+	MI(wall13).SetOrientation(ModelInstance::XAxis);
+	MI(wall14).SetPosition(-4, 2);
+	MI(wall14).SetOrientation(ModelInstance::XAxis);
+
+	// SIDE 3
+	_minstances.insert(make_pair(string("wall15"), miWallZ));
+	_minstances.insert(make_pair(string("wall16"), miWallZ));
+	_minstances.insert(make_pair(string("wall17"), miWallZ));
+	_minstances.insert(make_pair(string("wall18"), miWallZ));
+	_minstances.insert(make_pair(string("wall19"), miWallZ));
+	_minstances.insert(make_pair(string("wall20"), miWallZ));
+	_minstances.insert(make_pair(string("wall21"), miWallZ));
+	MI(wall15).SetPosition(-4, 2);
+	MI(wall15).SetOrientation(ModelInstance::ZAxis);
+	MI(wall16).SetPosition(-3, 2);
+	MI(wall16).SetOrientation(ModelInstance::ZAxis);
+	MI(wall17).SetPosition(-2, 2);
+	MI(wall17).SetOrientation(ModelInstance::ZAxis);
+	MI(wall18).SetPosition(-1, 2);
+	MI(wall18).SetOrientation(ModelInstance::ZAxis);
+	MI(wall19).SetPosition(0, 2);
+	MI(wall19).SetOrientation(ModelInstance::ZAxis);
+	MI(wall20).SetPosition(1, 2);
+	MI(wall20).SetOrientation(ModelInstance::ZAxis);
+	MI(wall21).SetPosition(2, 2);
+	MI(wall21).SetOrientation(ModelInstance::ZAxis);
+
+	// SIDE 4
+	_minstances.insert(make_pair(string("wall22"), miWallX));
+	_minstances.insert(make_pair(string("wall23"), miWallX));
+	_minstances.insert(make_pair(string("wall24"), miWallX));
+	_minstances.insert(make_pair(string("wall25"), miWallX));
+	_minstances.insert(make_pair(string("wall26"), miWallX));
+	MI(wall22).SetPosition(2, -4);
+	MI(wall22).SetOrientation(ModelInstance::XAxis);
+	MI(wall23).SetPosition(2, -3);
+	MI(wall23).SetOrientation(ModelInstance::XAxis);
+	MI(wall24).SetPosition(2, 0);
+	MI(wall24).SetOrientation(ModelInstance::XAxis);
+	MI(wall25).SetPosition(2, 1);
+	MI(wall25).SetOrientation(ModelInstance::XAxis);
+	MI(wall26).SetPosition(2, 2);
+	MI(wall26).SetOrientation(ModelInstance::XAxis);
 
 	// Create vehicles as copies of base instances miCar and miBus
 	_vehicles.insert(make_pair(string("car1"), miCar));

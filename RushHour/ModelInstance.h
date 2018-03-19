@@ -32,12 +32,6 @@ public:
 	// Other methods
 	Model& GetModel() const { return _model; }
 
-	/* TODO
-	LoadTexture
-	GetTexture
-	*/
-
-
 private:
 	// Reference to polygon model 
 	Model& _model;
