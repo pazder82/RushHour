@@ -73,7 +73,7 @@ Model::Model(const char* pFile) {
 					}
 					// If no texture found, use the default one
 					if (me._pTexture == nullptr) {
-						CreateWICTextureFromFile(dev, nullptr, L"default.jpg", nullptr, &(me._pTexture), 0);
+						CreateWICTextureFromFile(dev, nullptr, L"models/default.jpg", nullptr, &(me._pTexture), 0);
 					}
 					_entries.push_back(me);
 				}

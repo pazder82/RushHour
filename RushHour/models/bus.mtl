@@ -8,7 +8,7 @@ Ks 0.100000 0.100000 0.100000
 Ni 1.000000
 d 0.000000
 illum 2
-map_Kd bus_d.dds
+map_Kd models/bus_d.dds
 
 
 newmtl bus_glass
@@ -19,7 +19,7 @@ Ks 0.100000 0.100000 0.100000
 Ni 1.000000
 d 0.000000
 illum 2
-map_Kd bus_d.dds
+map_Kd models/bus_d.dds
 
 
 newmtl bus_sign
@@ -30,6 +30,6 @@ Ks 0.100000 0.100000 0.100000
 Ni 1.000000
 d 1.000000
 illum 2
-map_Kd bus_sign_d.dds
+map_Kd models/bus_sign_d.dds
 
 

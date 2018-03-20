@@ -194,11 +194,13 @@ void Game::UnlockActiveVehicle() {
 void Game::Render() {
 	CBUFFER cBuffer;
 	XMMATRIX matView, matPerspective;
+	XMVECTOR camPosition = XMVectorSet(0.0f, 4.0f, 10.0f, 0.0f);
+	camPosition = XMVector4Transform(camPosition, _rotation);
 
 	//Set the View matrix
 	matView = XMMatrixLookAtLH(
-		XMVectorSet(0.0f, 4.0f, 10.0f, 0.0f),   // the camera position
-		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),    // the look-at position
+		camPosition,                          // the camera position
+		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),  // the look-at position
 		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)   // the up direction
 	);
 	XMStoreFloat4x4(&cBuffer.view, matView);
@@ -237,9 +239,9 @@ void Game::Render() {
 		ModelInstance mi = it->second;
 
 		// Store instance transformation into constant buffer
-		XMMATRIX worldMatrix = mi.GetTransformation() * _worldOffset * _rotation;
+		XMMATRIX worldMatrix = mi.GetTransformation() * _worldOffset;
 		XMStoreFloat4x4(&cBuffer.world, worldMatrix * matView * matPerspective);
-		XMStoreFloat4x4(&(cBuffer.rotation), mi.GetInitRotation() * _rotation);
+		XMStoreFloat4x4(&cBuffer.rotation, mi.GetInitRotation());
 		cBuffer.diffuseColor = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
 		cBuffer.ambientColor = XMVectorSet(_ambientColorIntensity, _ambientColorIntensity, _ambientColorIntensity, 1.0f);
 		// Send constant buffer
@@ -259,9 +261,9 @@ void Game::Render() {
 			continue;
 		}
 		// Store vehicle transformation into constant buffer
-		XMMATRIX worldMatrix = mi.GetTransformation() * _worldOffset * _rotation;
+		XMMATRIX worldMatrix = mi.GetTransformation() * _worldOffset;
 		XMStoreFloat4x4(&cBuffer.world, worldMatrix * matView * matPerspective);
-		XMStoreFloat4x4(&(cBuffer.rotation), mi.GetInitRotation() * _rotation);
+		XMStoreFloat4x4(&cBuffer.rotation, mi.GetInitRotation());
 		// Store vehicle color into constant buffer
 		XMVECTOR vehicleColor = mi.GetColor();
 		cBuffer.diffuseColor = vehicleColor;
@@ -286,10 +288,10 @@ void Game::Render() {
 
 void Game::Init() {
 	// Load all models
-	_models.emplace(make_pair(string("bus"), Model("bus.obj")));
-	_models.emplace(make_pair(string("car"), Model("taxi_cab.obj")));
-	_models.emplace(make_pair(string("board"), Model("board.3DS")));
-	_models.emplace(make_pair(string("wall"), Model("oldWall.obj")));
+	_models.emplace(make_pair(string("bus"), Model("models/bus.obj")));
+	_models.emplace(make_pair(string("car"), Model("models/taxi_cab.obj")));
+	_models.emplace(make_pair(string("board"), Model("models/board.3DS")));
+	_models.emplace(make_pair(string("wall"), Model("models/oldWall.obj")));
 
 	// Create base model instances
 	const float carScale = 0.0075f;
@@ -309,7 +311,7 @@ void Game::Init() {
 	MI(board).SetOrientation(ModelInstance::XAxis);
 
 	// Create walls as copies of base instance miWall
-	// SIDE 1
+	// Wall side 1
 	_minstances.insert(make_pair(string("wall1"), miWallZ));
 	_minstances.insert(make_pair(string("wall2"), miWallZ));
 	_minstances.insert(make_pair(string("wall3"), miWallZ));
@@ -332,7 +334,7 @@ void Game::Init() {
 	MI(wall7).SetPosition(2, -4);
 	MI(wall7).SetOrientation(ModelInstance::ZAxis);
 
-	// SIDE 2
+	// Wall side 2
 	_minstances.insert(make_pair(string("wall8"), miWallX));
 	_minstances.insert(make_pair(string("wall9"), miWallX));
 	_minstances.insert(make_pair(string("wall10"), miWallX));
@@ -355,7 +357,7 @@ void Game::Init() {
 	MI(wall14).SetPosition(-4, 2);
 	MI(wall14).SetOrientation(ModelInstance::XAxis);
 
-	// SIDE 3
+	// Wall side 3
 	_minstances.insert(make_pair(string("wall15"), miWallZ));
 	_minstances.insert(make_pair(string("wall16"), miWallZ));
 	_minstances.insert(make_pair(string("wall17"), miWallZ));
@@ -378,7 +380,7 @@ void Game::Init() {
 	MI(wall21).SetPosition(2, 2);
 	MI(wall21).SetOrientation(ModelInstance::ZAxis);
 
-	// SIDE 4
+	// Wall side 4
 	_minstances.insert(make_pair(string("wall22"), miWallX));
 	_minstances.insert(make_pair(string("wall23"), miWallX));
 	_minstances.insert(make_pair(string("wall24"), miWallX));
@@ -415,21 +417,6 @@ void Game::Init() {
 
 	// Set color of each vehicle
 	VEH(car1).SetColor(XMUINT3{ 255, 0, 0 }); // Player's car
-	VEH(car2).SetColor(XMUINT3{ 253, 194, 0 });
-	VEH(car3).SetColor(XMUINT3{ 102, 102, 0 });
-	VEH(car4).SetColor(XMUINT3{ 153, 0, 153 });
-	VEH(car5).SetColor(XMUINT3{ 0, 255, 255 });
-	VEH(car6).SetColor(XMUINT3{ 102, 51, 0 });
-	VEH(car7).SetColor(XMUINT3{ 0, 153, 0 });
-	VEH(car8).SetColor(XMUINT3{ 209, 184, 132 });
-	VEH(car9).SetColor(XMUINT3{ 90, 90, 90 });
-	VEH(car10).SetColor(XMUINT3{ 255, 102, 255 });
-	VEH(car11).SetColor(XMUINT3{ 252, 255, 128 });
-	VEH(car12).SetColor(XMUINT3{ 153, 255, 204 });
-	VEH(bus1).SetColor(XMUINT3{ 255, 239, 0 });
-	VEH(bus2).SetColor(XMUINT3{ 0, 0, 255 });
-	VEH(bus3).SetColor(XMUINT3{ 240, 0, 255 });
-	VEH(bus4).SetColor(XMUINT3{ 0, 255, 162 });
 
 	/* DEBUG - umistovani instanci bude resit trida Level */
 	// Positon vehicles into the grid
@@ -464,7 +451,7 @@ void Game::Init() {
 	// Select first active vehicle
 	this->SetNextActiveVehicle();
 
-	// Once both shaders are loaded, create the mesh.
+	// Fill Vertex and Index buffers with data from Models
 	CreateVertexBuffer(Model::GetModelVertices());
 	CreateIndexBuffer(Model::GetModelIndices());
 

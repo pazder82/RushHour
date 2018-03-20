@@ -44,7 +44,7 @@ private:
 	Orientation_t _orientation = Orientation_t::XAxis;
 
     // Graphics settings vars
-	DirectX::XMVECTOR _color = DirectX::XMVectorSet(0.2f, 0.2f, 0.2f, 0.0f);
+	DirectX::XMVECTOR _color = DirectX::XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// Auxiliary methods
 	DirectX::XMVECTOR MakeColorVector(DirectX::XMUINT3 rgb);
