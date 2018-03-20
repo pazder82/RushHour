@@ -199,7 +199,7 @@ void Game::Render() {
 
 	//Set the View matrix
 	matView = XMMatrixLookAtLH(
-		camPosition,                          // the camera position
+		camPosition,                          // the camera position (rotating around the center of the board)
 		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),  // the look-at position
 		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)   // the up direction
 	);

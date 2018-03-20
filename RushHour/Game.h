@@ -55,7 +55,7 @@ private:
 	DirectX::XMMATRIX _worldOffset = DirectX::XMMatrixTranslation(0.5f, 0.0f, 0.5f);
 
 	// Color settings vars
-	const float _ambientColorIntensity = 0.4f;
+	const float _ambientColorIntensity = 0.5f;
 	bool _glowLevelUp = true;
 
 	// Active vehicle methods
