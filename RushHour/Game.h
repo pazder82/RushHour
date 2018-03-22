@@ -13,7 +13,6 @@
 
 #define BOARD_MAX_COORD 2
 #define BOARD_MIN_COORD -3
-#define MOVE_SPEED 0.02f
 
 #pragma once
 class Game {
@@ -23,9 +22,9 @@ public:
 	enum Direction_t { Forward, Backward };
 
 	void Init();
-	void Update();
+	void Update(double frameTime);
 	void Render();
-	void Rotate(float radians);
+	void Rotate(float direction);
 
 	// Methods for operating active vehicle
 	bool SetActiveVehicle(std::string idstr);
@@ -39,6 +38,9 @@ public:
 	bool IsVehicleFreeForMoveForwardOrBackward(std::string idstr, Game::Direction_t dir) const;
 
 private:
+	// Timer vars
+	double _frameTime = 0.0;
+
 	// Models and objects containers
 	std::map<std::string, Model> _models;
 	std::map<std::string, ModelInstance> _minstances;

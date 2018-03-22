@@ -7,14 +7,15 @@ using namespace DirectX;
 using namespace std;
 
 // Called once per frame, rotates the cube and calculates the model and view matrices.
-void Game::Update() {
+void Game::Update(double frameTime) {
+	_frameTime = frameTime;
 	UpdateMovementStep();
 	UpdateGlowLevel();
 }
 
 // Rotate the 3D scene a set amount of radians.
-void Game::Rotate(float radians) {
-	_rotationAngle += radians;
+void Game::Rotate(float direction) {
+	_rotationAngle += static_cast<float>(ROTATESPEED * direction * _frameTime);
 	// Prepare to pass the updated model matrix to the shader
 	_rotation = XMMatrixRotationY(_rotationAngle);
 }
@@ -81,7 +82,7 @@ bool Game::MoveActiveVehicle(Game::Direction_t dir) {
 		dirCoef = -1;
 	}
 
-	_vehicles.at(actVehicle).SetMovementStep(MOVE_SPEED * dirCoef);
+	_vehicles.at(actVehicle).SetMovementStep(_frameTime * MOVE_SPEED * dirCoef);
 	return true;
 }
 
@@ -138,11 +139,11 @@ void Game::UpdateMovementStep() {
 		return;
 	} else if (mi.GetMovementStep() < 0.0f) {
 		// moving backward
-		newMovementStep = mi.GetMovementStep() - MOVE_SPEED;
+		newMovementStep = mi.GetMovementStep() - (_frameTime * MOVE_SPEED);
 		dirCoef = -1;
 	} else {
 		// moving forward
-		newMovementStep = mi.GetMovementStep() + MOVE_SPEED;
+		newMovementStep = mi.GetMovementStep() + (_frameTime * MOVE_SPEED);
 		dirCoef = 1;
 	}
 
@@ -163,7 +164,7 @@ void Game::UpdateMovementStep() {
 // Update glow level of active vehicle blinking
 void Game::UpdateGlowLevel() {
 	const float maxGlowLevel = 2.0f;
-	const float glowLevelStep = 0.1f;
+	const float glowLevelStep = _frameTime * GLOWSPEED;
 	if (GetActiveVehicle().empty()) {
 		return;
 	}
