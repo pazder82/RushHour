@@ -10,7 +10,7 @@ using namespace DirectX;
 std::vector<VERTEX> Model::_objectVertices;
 std::vector<UINT> Model::_objectIndices;
 
-Model::Model(const char* pFile) {
+Model::Model(const char* pFile, ID3D11Device* dev) {
 	const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
 	_pScene = _imp.ReadFile(pFile, aiProcess_FlipUVs | aiProcess_FixInfacingNormals | aiProcess_MakeLeftHanded |
 		aiProcess_GenSmoothNormals | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_SortByPType);

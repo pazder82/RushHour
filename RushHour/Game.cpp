@@ -1,7 +1,7 @@
 #include "stdafx.h"
-#include "Game.h"
 #include <DirectXMath.h>
-
+#include "Game.h"
+#include "D3D.h"
 
 using namespace DirectX;
 using namespace std;
@@ -82,7 +82,7 @@ bool Game::MoveActiveVehicle(Game::Direction_t dir) {
 		dirCoef = -1;
 	}
 
-	_vehicles.at(actVehicle).SetMovementStep(_frameTime * MOVE_SPEED * dirCoef);
+	_vehicles.at(actVehicle).SetMovementStep(static_cast<float>(_frameTime * MOVE_SPEED * dirCoef));
 	return true;
 }
 
@@ -139,11 +139,11 @@ void Game::UpdateMovementStep() {
 		return;
 	} else if (mi.GetMovementStep() < 0.0f) {
 		// moving backward
-		newMovementStep = mi.GetMovementStep() - (_frameTime * MOVE_SPEED);
+		newMovementStep = mi.GetMovementStep() - (static_cast<float>(_frameTime * MOVE_SPEED));
 		dirCoef = -1;
 	} else {
 		// moving forward
-		newMovementStep = mi.GetMovementStep() + (_frameTime * MOVE_SPEED);
+		newMovementStep = mi.GetMovementStep() + (static_cast<float>(_frameTime * MOVE_SPEED));
 		dirCoef = 1;
 	}
 
@@ -164,7 +164,7 @@ void Game::UpdateMovementStep() {
 // Update glow level of active vehicle blinking
 void Game::UpdateGlowLevel() {
 	const float maxGlowLevel = 2.0f;
-	const float glowLevelStep = _frameTime * GLOWSPEED;
+	const float glowLevelStep = static_cast<float>(_frameTime * GLOWSPEED);
 	if (GetActiveVehicle().empty()) {
 		return;
 	}
@@ -216,24 +216,24 @@ void Game::Render() {
 
 	// clear the back buffer to a deep blue
 	FLOAT bgColor[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
-	devcon->ClearRenderTargetView(backbuffer, bgColor);
+	_d3d->GetDeviceContext()->ClearRenderTargetView(_d3d->GetBackBuffer(), bgColor);
 
 	// clear the depth buffer
-	devcon->ClearDepthStencilView(zbuffer, D3D11_CLEAR_DEPTH, 1.0f, 0);
+	_d3d->GetDeviceContext()->ClearDepthStencilView(_d3d->GetZBuffer(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	// select which vertex buffer to display
 	UINT stride = sizeof(VERTEX);
 	UINT offset = 0;
-	devcon->IASetVertexBuffers(0, 1, &pVBuffer, &stride, &offset);
-	devcon->IASetIndexBuffer(pIBuffer, DXGI_FORMAT_R32_UINT, 0);
+	_d3d->GetDeviceContext()->IASetVertexBuffers(0, 1, _d3d->GetVBufferAddr(), &stride, &offset);
+	_d3d->GetDeviceContext()->IASetIndexBuffer(_d3d->GetIBuffer(), DXGI_FORMAT_R32_UINT, 0);
 
 	// select which primtive type we are using
-	devcon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	devcon->IASetInputLayout(pLayout);
+	_d3d->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	_d3d->GetDeviceContext()->IASetInputLayout(_d3d->GetLayout());
 
 	// select Rasterizer and Sampler configuration
-	devcon->RSSetState(pRS);
-	devcon->PSSetSamplers(0, 1, &pSS);
+	_d3d->GetDeviceContext()->RSSetState(_d3d->GetRState());
+	_d3d->GetDeviceContext()->PSSetSamplers(0, 1, _d3d->GetSStateAddr());
 
 	// Draw model instances
 	for (auto it = _minstances.begin(); it != _minstances.end(); it++) {
@@ -246,12 +246,12 @@ void Game::Render() {
 		cBuffer.diffuseColor = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
 		cBuffer.ambientColor = XMVectorSet(_ambientColorIntensity, _ambientColorIntensity, _ambientColorIntensity, 1.0f);
 		// Send constant buffer
-		devcon->UpdateSubresource(pCBuffer, 0, 0, &cBuffer, 0, 0);
+		_d3d->GetDeviceContext()->UpdateSubresource(_d3d->GetCBuffer(), 0, 0, &cBuffer, 0, 0);
 
 		for (auto i : mi.GetModel().GetMeshEntries()) {
 			// select texture
-			devcon->PSSetShaderResources(0, 1, &i._pTexture);
-			devcon->DrawIndexed(i._numIndices, i._baseIndex, i._baseVertex);
+			_d3d->GetDeviceContext()->PSSetShaderResources(0, 1, &i._pTexture);
+			_d3d->GetDeviceContext()->DrawIndexed(i._numIndices, i._baseIndex, i._baseVertex);
 		}
 	}
 
@@ -274,25 +274,25 @@ void Game::Render() {
 			vehicleColor.m128_f32[2] * glowIntensity,
 			vehicleColor.m128_f32[3] * glowIntensity);
 		// Send constant buffer
-		devcon->UpdateSubresource(pCBuffer, 0, 0, &cBuffer, 0, 0);
+		_d3d->GetDeviceContext()->UpdateSubresource(_d3d->GetCBuffer(), 0, 0, &cBuffer, 0, 0);
 
 		for (auto i : mi.GetModel().GetMeshEntries()) {
 			// select texture
-			devcon->PSSetShaderResources(0, 1, &i._pTexture);
-			devcon->DrawIndexed(i._numIndices, i._baseIndex, i._baseVertex);
+			_d3d->GetDeviceContext()->PSSetShaderResources(0, 1, &i._pTexture);
+			_d3d->GetDeviceContext()->DrawIndexed(i._numIndices, i._baseIndex, i._baseVertex);
 		}
 	}
 
 	// switch the back buffer and the front buffer
-	swapchain->Present(0, 0);
+	_d3d->GetSwapChain()->Present(0, 0);
 }
 
 void Game::Init() {
 	// Load all models
-	_models.emplace(make_pair(string("bus"), Model("models/bus.obj")));
-	_models.emplace(make_pair(string("car"), Model("models/taxi_cab.obj")));
-	_models.emplace(make_pair(string("board"), Model("models/board.3DS")));
-	_models.emplace(make_pair(string("wall"), Model("models/oldWall.obj")));
+	_models.emplace(make_pair(string("bus"), Model("models/bus.obj", _d3d->GetDevice())));
+	_models.emplace(make_pair(string("car"), Model("models/taxi_cab.obj", _d3d->GetDevice())));
+	_models.emplace(make_pair(string("board"), Model("models/board.3DS", _d3d->GetDevice())));
+	_models.emplace(make_pair(string("wall"), Model("models/oldWall.obj", _d3d->GetDevice())));
 
 	// Create base model instances
 	const float carScale = 0.0075f;
@@ -453,8 +453,8 @@ void Game::Init() {
 	this->SetNextActiveVehicle();
 
 	// Fill Vertex and Index buffers with data from Models
-	CreateVertexBuffer(Model::GetModelVertices());
-	CreateIndexBuffer(Model::GetModelIndices());
+	_d3d->CreateVertexBuffer(Model::GetModelVertices());
+	_d3d->CreateIndexBuffer(Model::GetModelIndices());
 
 
 }

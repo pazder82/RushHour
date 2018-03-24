@@ -1,6 +1,7 @@
 #include "D3DSupplementary.h"
 #include "Model.h"
 #include "Vehicle.h"
+#include "D3D.h"
 #include <vector>
 #include <map>
 #include <string>
@@ -17,8 +18,9 @@
 #pragma once
 class Game {
 public:
-	Game() = default;
-	~Game() = default;
+	Game() = delete;
+	Game(HWND hWnd) { _d3d = new D3D(hWnd); }
+	~Game() { delete _d3d; }
 	enum Direction_t { Forward, Backward };
 
 	void Init();
@@ -40,6 +42,9 @@ public:
 private:
 	// Timer vars
 	double _frameTime = 0.0;
+
+	// DirectX objects
+	D3D* _d3d;
 
 	// Models and objects containers
 	std::map<std::string, Model> _models;

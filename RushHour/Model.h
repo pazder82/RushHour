@@ -41,7 +41,7 @@ private:
 	const aiMesh* _pMesh = nullptr;
 
 public:
-	Model(const char* pFile);
+	Model(const char* pFile, ID3D11Device* dev);
 	Model(const Model&) = delete;
 	Model(Model&&) = default;
 	Model& operator= (const Model&) = delete;
