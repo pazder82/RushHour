@@ -1,6 +1,7 @@
 #include "D3DSupplementary.h"
 #include "Model.h"
 #include "Vehicle.h"
+#include "D2D.h"
 #include "D3D.h"
 #include <vector>
 #include <map>
@@ -19,8 +20,8 @@
 class Game {
 public:
 	Game() = delete;
-	Game(HWND hWnd) { _d3d = new D3D(hWnd); }
-	~Game() { delete _d3d; }
+	Game(HWND hWnd) { _d3d = new D3D(hWnd); _d2d = new D2D(_d3d); }
+	~Game() { delete _d2d; delete _d3d; }
 	enum Direction_t { Forward, Backward };
 
 	void Init();
@@ -39,11 +40,14 @@ public:
 	bool IsVehicleFreeForMove(std::string idstr) const;
 	bool IsVehicleFreeForMoveForwardOrBackward(std::string idstr, Game::Direction_t dir) const;
 
+	void PrintFps(int fps);
+
 private:
 	// Timer vars
 	double _frameTime = 0.0;
 
 	// DirectX objects
+	D2D* _d2d;
 	D3D* _d3d;
 
 	// Models and objects containers

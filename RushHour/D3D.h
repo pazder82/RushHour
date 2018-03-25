@@ -1,7 +1,6 @@
 #pragma once
 
 #include <d3d11.h>
-#include <d3dcompiler.h>
 #include <directxmath.h>
 #include <vector>
 #include "RushHour.h"
@@ -22,6 +21,7 @@ public:
 	void CreateIndexBuffer(std::vector<UINT> OurIndices);
 
 	IDXGISwapChain* GetSwapChain() const { return _swapChain; };
+	IDXGIDevice* GetDXGIDevice() const { return _dxgiDevice; }
 	ID3D11Device* GetDevice() const { return _dev; }
 	ID3D11DeviceContext* GetDeviceContext() const { return _devCon; }
 	ID3D11RenderTargetView* GetBackBuffer() const { return _bBuffer; }
@@ -37,6 +37,7 @@ public:
 
 private:
 	IDXGISwapChain* _swapChain;             // swap chain interface
+	IDXGIDevice* _dxgiDevice;
 	ID3D11Device* _dev;                     // device interface
 	ID3D11DeviceContext* _devCon;           // device context
 	ID3D11VertexShader* _vs;                // vertex shader

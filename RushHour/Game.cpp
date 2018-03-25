@@ -2,6 +2,7 @@
 #include <DirectXMath.h>
 #include "Game.h"
 #include "D3D.h"
+#include "CommonException.h"
 
 using namespace DirectX;
 using namespace std;
@@ -177,7 +178,13 @@ void Game::UpdateGlowLevel() {
 	}
 
 	int glowDirCoef = (_glowLevelUp) ? 1 : -1;
-	ai.SetGlowLevel(glowLevel + (glowLevelStep * glowDirCoef));
+	float newGlowLevel = glowLevel + (glowLevelStep * glowDirCoef);
+	if (newGlowLevel > maxGlowLevel) {
+		newGlowLevel = maxGlowLevel;
+	} else if (newGlowLevel < 0.0f) {
+		newGlowLevel = 0.0f;
+	}
+	ai.SetGlowLevel(newGlowLevel);
 }
 
 bool Game::LockActiveVehicle() {
@@ -189,6 +196,15 @@ bool Game::LockActiveVehicle() {
 
 void Game::UnlockActiveVehicle() {
 	_activeVehicleLock = false;
+}
+
+// Print current FPS into Direct2 target
+void Game::PrintFps(int fps) {
+	std::wstring s = L"FPS: " + std::to_wstring(fps);
+	if (FAILED(_d2d->GetWriteFactory()->CreateTextLayout(s.c_str(), (UINT32)s.size(), _d2d->GetTextFormatFPS(), 
+		(float)SCREEN_WIDTH, (float)SCREEN_HEIGHT, _d2d->GetTextLayoutFPSAddr()))) {
+		throw CommonException((LPWSTR)L"Critical error: Failed to create the text layout for FPS information!");
+	}
 }
 
 // Renders one frame using the vertex and pixel shaders.
@@ -282,6 +298,9 @@ void Game::Render() {
 			_d3d->GetDeviceContext()->DrawIndexed(i._numIndices, i._baseIndex, i._baseVertex);
 		}
 	}
+
+	// print FPS info
+	_d2d->PrintInfo();
 
 	// switch the back buffer and the front buffer
 	_d3d->GetSwapChain()->Present(0, 0);
