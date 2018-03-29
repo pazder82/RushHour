@@ -220,15 +220,17 @@ void Game::Render() {
 		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),  // the look-at position
 		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)   // the up direction
 	);
-	XMStoreFloat4x4(&cBuffer.view, matView);
+	cBuffer.cameraPosition = camPosition;
 
 	// create a projection matrix
 	matPerspective = XMMatrixPerspectiveFovLH((FLOAT)XMConvertToRadians(45), (FLOAT)SCREEN_WIDTH / (FLOAT)SCREEN_HEIGHT, 1.0f, 100.0f);
-	XMStoreFloat4x4(&cBuffer.projection, matPerspective);
 
-	cBuffer.diffuseVector = XMVectorSet(-1.0f, 1.0f, 1.0f, 0.0f);
+	//cBuffer.lightVector = XMVector4Normalize(XMVector4Transform(XMVectorSet(-1.0f, 1.0f, 1.0f, 1.0f), _rotation));
+	cBuffer.lightVector = XMVectorSet(-1.0f, 1.0f, 1.0f, 1.0f);
 	cBuffer.diffuseColor = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
 	cBuffer.ambientColor = XMVectorSet(_ambientColorIntensity, _ambientColorIntensity, _ambientColorIntensity, 1.0f);
+	// TODO: obtain specular power from material
+	cBuffer.specularColor = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// clear the back buffer to a deep blue
 	FLOAT bgColor[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
@@ -257,10 +259,11 @@ void Game::Render() {
 
 		// Store instance transformation into constant buffer
 		XMMATRIX worldMatrix = mi.GetTransformation() * _worldOffset;
+		//XMStoreFloat4x4(&cBuffer.world, XMMatrixTranspose(worldMatrix * matView * matPerspective));
 		XMStoreFloat4x4(&cBuffer.world, worldMatrix * matView * matPerspective);
 		XMStoreFloat4x4(&cBuffer.rotation, mi.GetInitRotation());
-		cBuffer.diffuseColor = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
-		cBuffer.ambientColor = XMVectorSet(_ambientColorIntensity, _ambientColorIntensity, _ambientColorIntensity, 1.0f);
+		XMStoreFloat4x4(&cBuffer.invTrWorld, XMMatrixInverse(nullptr, XMMatrixTranspose(worldMatrix)));
+		cBuffer.specularPower = 1.0f;
 		// Send constant buffer
 		_d3d->GetDeviceContext()->UpdateSubresource(_d3d->GetCBuffer(), 0, 0, &cBuffer, 0, 0);
 
@@ -279,8 +282,10 @@ void Game::Render() {
 		}
 		// Store vehicle transformation into constant buffer
 		XMMATRIX worldMatrix = mi.GetTransformation() * _worldOffset;
+		//XMStoreFloat4x4(&cBuffer.world, XMMatrixTranspose(worldMatrix * matView * matPerspective));
 		XMStoreFloat4x4(&cBuffer.world, worldMatrix * matView * matPerspective);
 		XMStoreFloat4x4(&cBuffer.rotation, mi.GetInitRotation());
+		XMStoreFloat4x4(&cBuffer.invTrWorld, XMMatrixInverse(nullptr, XMMatrixTranspose(worldMatrix)));
 		// Store vehicle color into constant buffer
 		XMVECTOR vehicleColor = mi.GetColor();
 		cBuffer.diffuseColor = vehicleColor;
@@ -289,10 +294,36 @@ void Game::Render() {
 			vehicleColor.m128_f32[1] * glowIntensity,
 			vehicleColor.m128_f32[2] * glowIntensity,
 			vehicleColor.m128_f32[3] * glowIntensity);
+		cBuffer.specularPower = 32.0f;
 		// Send constant buffer
 		_d3d->GetDeviceContext()->UpdateSubresource(_d3d->GetCBuffer(), 0, 0, &cBuffer, 0, 0);
 
 		for (auto i : mi.GetModel().GetMeshEntries()) {
+			/*
+			// HLSL DEBUG:
+			auto v = mi.GetModel().GetModelVertices();
+			for (auto j : v) {
+				XMVECTOR p = XMVectorSet(j.pos.x, j.pos.y, j.pos.z, 1.0f);
+				XMVECTOR n = XMVectorSet(j.normal.x, j.normal.y, j.normal.z, 1.0f);
+				XMVECTOR worldposition = XMVector4Transform(p, worldMatrix);
+				XMVECTOR norm = XMVector4Normalize(XMVector4Transform(n, worldMatrix));
+				XMVECTOR lightpos = XMVectorSet(-1.0f, 0.0f, 0.0f, 1.0f);
+				XMVECTOR lightvec = XMVector4Normalize(lightpos - worldposition);
+				lightvec = -lightvec;
+				XMVECTOR lightintensity = XMVectorSaturate(XMVector4Dot(norm, lightvec)); // calculate the amount of light
+				XMVECTOR norm2 = XMVectorSet(norm.m128_f32[0], norm.m128_f32[1], norm.m128_f32[2], 0.0f);
+				XMVECTOR lightvec2 = XMVectorSet(lightvec.m128_f32[0], lightvec.m128_f32[1], lightvec.m128_f32[2], 0.0f);
+				XMVECTOR lightintensity2 = XMVectorSaturate(XMVector4Dot(norm2, lightvec2)); // calculate the amount of light
+				FXMVECTOR norm3 = { norm.m128_f32[0], norm.m128_f32[1], norm.m128_f32[2] };
+				FXMVECTOR lightvec3 = { lightvec.m128_f32[0], lightvec.m128_f32[1], lightvec.m128_f32[2] };
+				XMVECTOR lightintensity3 = XMVectorSaturate(XMVector3Dot(norm3, lightvec3)); // calculate the amount of light
+				if (lightintensity.m128_f32[0] < 0.5f) {
+					lightvec = -lightvec;
+				}
+			}
+			// DEBUG END
+			*/
+
 			// select texture
 			_d3d->GetDeviceContext()->PSSetShaderResources(0, 1, &i._pTexture);
 			_d3d->GetDeviceContext()->DrawIndexed(i._numIndices, i._baseIndex, i._baseVertex);

@@ -75,7 +75,7 @@ void D2D::InitializeTextFormats() {
 		throw CommonException((LPWSTR)L"Critical error: Unable to create the white brush!");
 
 	// set up text formats
-	// FPS text
+	// info text
 	if (FAILED(_writeFactory->CreateTextFormat(L"Lucida Console", nullptr, DWRITE_FONT_WEIGHT_LIGHT, 
 		DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 12.0f, L"en-GB", &_textFormatFPS)))
 		throw CommonException((LPWSTR)L"Critical error: Unable to create text format for FPS information!");
