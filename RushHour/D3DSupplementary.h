@@ -10,9 +10,9 @@ struct VERTEX {
 	DirectX::XMFLOAT2 textCoord;
 };
 struct CBUFFER {
-	DirectX::XMFLOAT4X4 world;
-	DirectX::XMFLOAT4X4 rotation;
-	DirectX::XMFLOAT4X4 invTrWorld;
+	DirectX::XMMATRIX world;
+	DirectX::XMMATRIX rotation;
+	DirectX::XMMATRIX trInvWorld;
 	DirectX::XMVECTOR cameraPosition;
 	DirectX::XMVECTOR lightVector;
 	DirectX::XMVECTOR diffuseColor;

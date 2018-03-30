@@ -1,7 +1,7 @@
 cbuffer ConstantBuffer {
 	matrix world;
 	matrix rotation;
-	matrix invtrworld;
+	matrix trinvworld;
 	float4 camposition; // position of the camera
 	float4 lightpos; // the diffuse light's vector
 	float4 diffusecol; // the diffuse light's color
@@ -30,20 +30,16 @@ VOut VShader(float4 position : POSITION, float3 normal : NORMAL, float2 texcoord
 
 	// AMBIENT LIGHT & NORMAL TRANSFORMATION
 	float4 color = ambientcol;
-	float3 norm = normalize(mul((float3x3)invtrworld, normal));
+	//float3 norm = normalize(mul((float3x3)trinvworld, normal));
+	float3 norm = normalize(mul((float3x3)world, normal));
 
 	// DIFFUSE LIGHT
 	float3 lightpos3 = lightpos.xyz;
 	float3 lightvec = normalize(lightpos3 - worldposition);
-	//float3 lightvec = lightpos3;
 	lightvec = -lightvec;
 	float lightintensity = saturate(dot(norm, lightvec)); // calculate the amount of light
 
 	// SPECULAR LIGHT
-	// Determine the viewing direction based on the position of the camera and the position of the vertex in the world.
-	//float3 camvec = mul(view, float4(0.0f, 0.0f, 0.0f, 1.0f)).xyz;
-	//camvec = normalize(camvec - worldposition.xyz);
-	
 	float3 camposition3 = camposition.xyz;
 	float3 camvec = normalize(camposition3 - worldposition);
 	camvec = -camvec;
