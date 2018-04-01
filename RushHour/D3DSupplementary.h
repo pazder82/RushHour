@@ -11,8 +11,8 @@ struct VERTEX {
 };
 struct CBUFFER {
 	DirectX::XMMATRIX world;
-	DirectX::XMMATRIX rotation;
-	DirectX::XMMATRIX trInvWorld;
+	DirectX::XMMATRIX mvp;
+	DirectX::XMMATRIX invTrWorld;
 	DirectX::XMVECTOR cameraPosition;
 	DirectX::XMVECTOR lightVector;
 	DirectX::XMVECTOR diffuseColor;

@@ -1,6 +1,6 @@
 cbuffer ConstantBuffer {
 	matrix world;
-	matrix rotation;
+	matrix mvp;
 	matrix trinvworld;
 	float4 camposition; // position of the camera
 	float4 lightpos; // the diffuse light's vector
@@ -24,19 +24,20 @@ VOut VShader(float4 position : POSITION, float3 normal : NORMAL, float2 texcoord
 
 	// VERTEX POSITION TRANSFORMATION
 	// Calculate the position of the vertex in the world
-	float4 worldposition4 = mul(world, position);
+//	float4 worldposition4 = mul(world, position);
 	float3 worldposition = mul((float3x3)world, position.xyz);
-	output.position = worldposition4;
+	output.position = mul(mvp, position);
 
 	// AMBIENT LIGHT & NORMAL TRANSFORMATION
 	float4 color = ambientcol;
-	//float3 norm = normalize(mul((float3x3)trinvworld, normal));
-	float3 norm = normalize(mul((float3x3)world, normal));
+	float3 norm = normalize(mul((float3x3)trinvworld, normal));
+	//float3 norm = normalize(mul((float3x3)world, normal));
 
 	// DIFFUSE LIGHT
 	float3 lightpos3 = lightpos.xyz;
 	float3 lightvec = normalize(lightpos3 - worldposition);
-	lightvec = -lightvec;
+//	float4 lightvec = normalize(lightpos - worldposition4);
+//	lightvec = -lightvec;
 	float lightintensity = saturate(dot(norm, lightvec)); // calculate the amount of light
 
 	// SPECULAR LIGHT
@@ -50,7 +51,7 @@ VOut VShader(float4 position : POSITION, float3 normal : NORMAL, float2 texcoord
 	float4 finalspecular = dampedfactor * specularcol;
 	
 	// COMBINE ALL LIGTHS TOGETHER
-	color += diffusecol * lightintensity + finalspecular;
+	color += diffusecol * lightintensity;// +finalspecular;
 	output.color = saturate(color);
 
 	// TEXTURE

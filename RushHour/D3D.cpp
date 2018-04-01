@@ -82,7 +82,6 @@ void D3D::CreateDepthBuffer() {
 	texd.ArraySize = 1;
 	texd.MipLevels = 1;
 	texd.SampleDesc.Count = 4;
-	//texd.Format = DXGI_FORMAT_D32_FLOAT;
 	texd.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	texd.Usage = D3D11_USAGE_DEFAULT;
 	texd.BindFlags = D3D11_BIND_DEPTH_STENCIL;
