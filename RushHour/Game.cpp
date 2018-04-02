@@ -211,7 +211,7 @@ void Game::PrintFps(int fps) {
 void Game::Render() {
 	CBUFFER cBuffer;
 	XMMATRIX matView, matPerspective;
-	XMVECTOR camPosition = XMVectorSet(0.0f, 4.0f, 10.0f, 0.0f);
+	XMVECTOR camPosition = XMVectorSet(0.0f, 4.0f, -10.0f, 0.0f);
 	camPosition = XMVector4Transform(camPosition, _rotation);
 
 	//Set the View matrix
@@ -225,7 +225,7 @@ void Game::Render() {
 	// create a projection matrix
 	matPerspective = XMMatrixPerspectiveFovLH((FLOAT)XMConvertToRadians(45), (FLOAT)SCREEN_WIDTH / (FLOAT)SCREEN_HEIGHT, 1.0f, 100.0f);
 
-	cBuffer.lightVector = XMVectorSet(-10.0f, 10.0f, 10.0f, 1.0f);
+	cBuffer.lightVector = XMVectorSet(-10.0f, 2.0f, 6.0f, 1.0f);
 	cBuffer.diffuseColor = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
 	cBuffer.ambientColor = XMVectorSet(_ambientColorIntensity, _ambientColorIntensity, _ambientColorIntensity, 1.0f);
 	cBuffer.specularColor = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
@@ -262,8 +262,7 @@ void Game::Render() {
 		cBuffer.world = worldMatrix;
 		cBuffer.mvp = mvpMatrix;
 		cBuffer.invTrWorld = invTrWorld;
-		// TODO: obtain specularPower from model
-		cBuffer.specularPower = 1.0f;
+		cBuffer.specularPower = 100000.0f;
 		// Send constant buffer
 		_d3d->GetDeviceContext()->UpdateSubresource(_d3d->GetCBuffer(), 0, 0, &cBuffer, 0, 0);
 
@@ -296,37 +295,11 @@ void Game::Render() {
 			vehicleColor.m128_f32[1] * glowIntensity,
 			vehicleColor.m128_f32[2] * glowIntensity,
 			vehicleColor.m128_f32[3] * glowIntensity);
-		// TODO: obtain specularPower from model
-		cBuffer.specularPower = 32.0f;
+		cBuffer.specularPower = 20.0f;
 		// Send constant buffer
 		_d3d->GetDeviceContext()->UpdateSubresource(_d3d->GetCBuffer(), 0, 0, &cBuffer, 0, 0);
 
 		for (auto i : mi.GetModel().GetMeshEntries()) {
-/*			
-			// HLSL DEBUG:
-			auto v = mi.GetModel().GetModelVertices();
-			for (auto j : v) {
-				//XMVECTOR p = XMVectorSet(j.pos.x, j.pos.y, j.pos.z, 1.0f);
-				//XMVECTOR n = XMVectorSet(j.normal.x, j.normal.y, j.normal.z, 1.0f);
-				XMVECTOR p = XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f);
-				FXMVECTOR n = { 0.0f, 1.0f, 0.0f };
-				worldMatrix = XMMatrixScaling(1.0f, 0.5f, 1.0f) * XMMatrixRotationZ(XMConvertToRadians(-90.0f)) * XMMatrixTranslation(1.0f, 0.0f, 0.0f);
-				trInvWorld = XMMatrixTranspose(XMMatrixInverse(nullptr, worldMatrix));
-				XMVECTOR worldposition = XMVector4Transform(p, worldMatrix);
-				XMVECTOR worldposition3 = XMVector3Transform(p, worldMatrix);
-				XMVECTOR xnorm = XMVector3Transform(n, worldMatrix);
-				XMVECTOR tnorm = XMVector3Transform(n, trInvWorld);
-				XMVECTOR norm = XMVector3Normalize(tnorm);
-				XMVECTOR lightpos = XMVectorSet( 0.0f, 1.0f, 0.0f, 0.0f );
-				XMVECTOR lightvec = XMVector3Normalize(lightpos - worldposition3);
-				lightvec = -lightvec;
-				XMVECTOR lightintensity = XMVectorSaturate(XMVector3Dot(norm, lightvec)); // calculate the amount of light
-				if (lightintensity.m128_f32[0] < 0.5f) {
-					lightvec = -lightvec;
-				}
-			}
-			// DEBUG END
-*/
 			// select texture
 			_d3d->GetDeviceContext()->PSSetShaderResources(0, 1, &i._pTexture);
 			_d3d->GetDeviceContext()->DrawIndexed(i._numIndices, i._baseIndex, i._baseVertex);
