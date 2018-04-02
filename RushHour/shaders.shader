@@ -13,54 +13,48 @@ cbuffer ConstantBuffer {
 Texture2D Texture;
 SamplerState ss;
 
-struct VOut {
-	float4 color : COLOR;
-	float2 texcoord : TEXCOORD0;
+struct PixelInputType {
 	float4 position : SV_POSITION;
+	float2 texcoord : TEXCOORD0;
+	float3 normal : NORMAL;
+	float3 viewdirection : TEXCOORD1;
+	float3 lightvec : TEXCOORD2;
 };
 
-VOut VShader(float4 position : POSITION, float3 normal : NORMAL, float2 texcoord : TEXCOORD) {
-	VOut output;
+PixelInputType VShader(float4 position : POSITION, float3 normal : NORMAL, float2 texcoord : TEXCOORD) {
+	PixelInputType output;
 
-	// VERTEX POSITION TRANSFORMATION
-	// Calculate the position of the vertex in the world
-//	float4 worldposition4 = mul(world, position);
 	float3 worldposition = mul((float3x3)world, position.xyz);
+
 	output.position = mul(mvp, position);
-
-	// AMBIENT LIGHT & NORMAL TRANSFORMATION
-	float4 color = ambientcol;
-	float3 norm = normalize(mul((float3x3)trinvworld, normal));
-	//float3 norm = normalize(mul((float3x3)world, normal));
-
-	// DIFFUSE LIGHT
-	float3 lightpos3 = lightpos.xyz;
-	float3 lightvec = normalize(lightpos3 - worldposition);
-//	float4 lightvec = normalize(lightpos - worldposition4);
-//	lightvec = -lightvec;
-	float lightintensity = saturate(dot(norm, lightvec)); // calculate the amount of light
-
-	// SPECULAR LIGHT
-	float3 camposition3 = camposition.xyz;
-	float3 camvec = normalize(camposition3 - worldposition);
-	camvec = -camvec;
-	float3 reflectedlight = reflect(lightvec, norm);
-
-	float specularfactor = saturate(dot(reflectedlight, camvec));
-	float dampedfactor = pow(specularfactor, specularpow);
-	float4 finalspecular = dampedfactor * specularcol;
-	
-	// COMBINE ALL LIGTHS TOGETHER
-	color += diffusecol * lightintensity;// +finalspecular;
-	output.color = saturate(color);
-
-	// TEXTURE
 	output.texcoord = texcoord;
+	output.normal = normalize(mul((float3x3)trinvworld, normal));
+	output.viewdirection = -(normalize(camposition.xyz - worldposition));
+	output.lightvec = normalize(lightpos.xyz - worldposition);
 
 	return output;
 }
 
-float4 PShader(float4 color : COLOR, float2 texcoord : TEXCOORD) : SV_TARGET
+float4 PShader(PixelInputType input) : SV_TARGET
 {
-	return color *Texture.Sample(ss, texcoord);
+	// AMBIENT LIGHT
+	float4 color = ambientcol;
+
+	// DIFFUSE LIGHT
+	float lightintensity = saturate(dot(input.normal, input.lightvec));
+	color += diffusecol * lightintensity;
+	color = saturate(color);
+
+	// SPECULAR LIGHT
+	float3 reflectedlight = reflect(input.lightvec, input.normal);
+
+	float specularfactor = saturate(dot(reflectedlight, input.viewdirection));
+	float dampedfactor = pow(specularfactor, specularpow);
+	float4 specular = dampedfactor * specularcol;
+
+	// COMBINE ALL LIGHTS AND TEXTURE TOGETHER
+	color *= Texture.Sample(ss, input.texcoord);
+	color = saturate(color + specular);
+
+	return color;
 }
