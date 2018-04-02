@@ -61,11 +61,11 @@ Model::Model(const char* pFile, ID3D11Device* dev) {
 							material->GetTexture(aiTextureType_DIFFUSE, 0, &aiTextureFile);
 							// Convert aiString to LPWSTR
 							size_t size = strlen(aiTextureFile.C_Str()) + 1; // plus null
-							wchar_t* wcTextureFile = new wchar_t[size];
-							std::shared_ptr<wchar_t> sp(wcTextureFile, std::default_delete<wchar_t[]>());
+							auto wcTextureFile = std::make_unique<wchar_t[]>(size);
 							size_t outSize;
-							mbstowcs_s(&outSize, wcTextureFile, size, aiTextureFile.C_Str(), size - 1);
-							LPWSTR textureFile = wcTextureFile;
+							mbstowcs_s(&outSize, wcTextureFile.get(), size, aiTextureFile.C_Str(), size - 1);
+							LPWSTR textureFile = wcTextureFile.get();
+
 							CreateWICTextureFromFile(dev, nullptr, textureFile, nullptr, &(me._pTexture), 0);
 							if (me._pTexture == nullptr) {
 								CreateDDSTextureFromFile(dev, nullptr, textureFile, nullptr, &(me._pTexture), 0);
