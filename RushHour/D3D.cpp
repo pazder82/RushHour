@@ -169,6 +169,7 @@ void D3D::CreateConstantBuffer() {
 		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D constant buffer!");
 	}
 	_devCon->VSSetConstantBuffers(0, 1, &_cBuffer);
+	_devCon->PSSetConstantBuffers(0, 1, &_cBuffer);
 }
 
 void D3D::CreateVertexBuffer(std::vector<VERTEX> OurVertices) {
