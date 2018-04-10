@@ -32,8 +32,10 @@ public:
 	ID3D11Buffer* GetIBuffer() const { return _iBuffer; }
 	ID3D11InputLayout* GetLayout() const { return _layout; }
 	ID3D11RasterizerState* GetRState() const { return _rs;  }
-	ID3D11SamplerState* GetSState() const { return _ss; }
-	ID3D11SamplerState** GetSStateAddr() { return &(_ss); }
+	ID3D11SamplerState* GetSStateWrap() const { return _ssw; }
+	ID3D11SamplerState** GetSStateWrapAddr() { return &(_ssw); }
+	ID3D11SamplerState* GetSStateClamp() const { return _ssc; }
+	ID3D11SamplerState** GetSStateClampAddr() { return &(_ssc); }
 
 private:
 	IDXGISwapChain* _swapChain;             // swap chain interface
@@ -51,7 +53,8 @@ private:
 
 	// State objects
 	ID3D11RasterizerState* _rs;            // the default rasterizer state
-	ID3D11SamplerState* _ss;               // sampler state
+	ID3D11SamplerState* _ssw;               // sampler state wrap
+	ID3D11SamplerState* _ssc;               // sampler state clamp
 
 	void CreateDevice(HWND hWnd);
 	void CreateDepthBuffer();

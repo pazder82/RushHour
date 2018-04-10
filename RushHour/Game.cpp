@@ -210,11 +210,13 @@ void Game::PrintFps(int fps) {
 // Renders one frame using the vertex and pixel shaders.
 void Game::Render() {
 	CBUFFER cBuffer;
+
+	// *** CAMERA SECTION
 	XMMATRIX matView, matPerspective;
-	XMVECTOR camPosition = XMVectorSet(0.0f, 4.0f, -10.0f, 0.0f);
+	XMVECTOR camPosition = XMVectorSet(0.0f, 4.0f, -10.0f, 1.0f);
 	camPosition = XMVector4Transform(camPosition, _rotation);
 
-	//Set the View matrix
+	// Set View matrix
 	matView = XMMatrixLookAtLH(
 		camPosition,                          // the camera position (rotating around the center of the board)
 		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),  // the look-at position
@@ -222,14 +224,28 @@ void Game::Render() {
 	);
 	cBuffer.cameraPosition = camPosition;
 
-	// create a projection matrix
+	// Set projection matrix
 	matPerspective = XMMatrixPerspectiveFovLH((FLOAT)XMConvertToRadians(45), (FLOAT)SCREEN_WIDTH / (FLOAT)SCREEN_HEIGHT, 1.0f, 100.0f);
 
-	cBuffer.lightVector = XMVectorSet(-10.0f, 2.0f, 6.0f, 1.0f);
+	// *** LIGHTS SECTION
+	XMMATRIX lightView, lightPerspective;
+	XMVECTOR lightPosition = XMVectorSet(-10.0f, 2.0f, 6.0f, 1.0f);
+
+	// Set light view matrix
+	lightView = XMMatrixLookAtLH(
+		lightPosition,                        // the light position
+		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),  // the look-at position
+		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)   // the up direction
+	);
+	cBuffer.lightPosition = lightPosition;
 	cBuffer.diffuseColor = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
 	cBuffer.ambientColor = XMVectorSet(_ambientColorIntensity, _ambientColorIntensity, _ambientColorIntensity, 1.0f);
 	cBuffer.specularColor = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
 
+	// Set light projection matrix
+	lightPerspective = XMMatrixPerspectiveFovLH((FLOAT)XMConvertToRadians(45), (FLOAT)SCREEN_WIDTH / (FLOAT)SCREEN_HEIGHT, 1.0f, 100.0f);
+
+	// *** RENDER SECTION
 	// clear the back buffer to a deep blue
 	FLOAT bgColor[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
 	_d3d->GetDeviceContext()->ClearRenderTargetView(_d3d->GetBackBuffer(), bgColor);
@@ -249,7 +265,8 @@ void Game::Render() {
 
 	// select Rasterizer and Sampler configuration
 	_d3d->GetDeviceContext()->RSSetState(_d3d->GetRState());
-	_d3d->GetDeviceContext()->PSSetSamplers(0, 1, _d3d->GetSStateAddr());
+	_d3d->GetDeviceContext()->PSSetSamplers(0, 1, _d3d->GetSStateWrapAddr());
+	_d3d->GetDeviceContext()->PSSetSamplers(1, 1, _d3d->GetSStateClampAddr());
 
 	// Draw model instances
 	for (auto it = _minstances.begin(); it != _minstances.end(); it++) {
@@ -258,9 +275,11 @@ void Game::Render() {
 		// Store instance transformation into constant buffer
 		XMMATRIX worldMatrix = mi.GetTransformation() * _worldOffset;
 		XMMATRIX mvpMatrix = worldMatrix * matView * matPerspective;
+		XMMATRIX lightMvpMatrix = worldMatrix * lightView * lightPerspective;
 		XMMATRIX invTrWorld = XMMatrixInverse(nullptr, XMMatrixTranspose(worldMatrix));
 		cBuffer.world = worldMatrix;
 		cBuffer.mvp = mvpMatrix;
+		cBuffer.lightmvp = lightMvpMatrix;
 		cBuffer.invTrWorld = invTrWorld;
 		cBuffer.specularPower = 100000.0f;
 		// Send constant buffer
@@ -282,9 +301,11 @@ void Game::Render() {
 		// Store vehicle transformation into constant buffer
 		XMMATRIX worldMatrix = mi.GetTransformation() * _worldOffset;
 		XMMATRIX mvpMatrix = worldMatrix * matView * matPerspective;
+		XMMATRIX lightMvpMatrix = worldMatrix * lightView * lightPerspective;
 		XMMATRIX invTrWorld = XMMatrixInverse(nullptr, XMMatrixTranspose(worldMatrix));
 		cBuffer.world = worldMatrix;
 		cBuffer.mvp = mvpMatrix;
+		cBuffer.lightmvp = lightMvpMatrix;
 		cBuffer.invTrWorld = invTrWorld;
 		// Store vehicle color into constant buffer
 		XMVECTOR vehicleColor = mi.GetColor();

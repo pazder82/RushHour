@@ -12,9 +12,10 @@ struct VERTEX {
 struct CBUFFER {
 	DirectX::XMMATRIX world;
 	DirectX::XMMATRIX mvp;
+	DirectX::XMMATRIX lightmvp;
 	DirectX::XMMATRIX invTrWorld;
 	DirectX::XMVECTOR cameraPosition;
-	DirectX::XMVECTOR lightVector;
+	DirectX::XMVECTOR lightPosition;
 	DirectX::XMVECTOR diffuseColor;
 	DirectX::XMVECTOR ambientColor;
 	float specularPower;

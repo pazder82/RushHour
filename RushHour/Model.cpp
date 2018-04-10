@@ -71,6 +71,24 @@ Model::Model(const char* pFile, ID3D11Device* dev) {
 								CreateDDSTextureFromFile(dev, nullptr, textureFile, nullptr, &(me._pTexture), 0);
 							}
 						}
+/*
+						// Load property
+						aiMaterialProperty* property;
+						char* strp;
+						float f;
+						int i;
+						for (unsigned int p = 0; p < material->mNumProperties; p++) {
+							property = material->mProperties[p];
+							if (property->mType == aiPTI_String) {
+								strp = (char*)(property->mData);
+								strp += 4;
+							} else if (property->mType == aiPTI_Float) {
+								f = *(float*)(property->mData);
+							} else if (property->mType == aiPTI_Integer) {
+								i = *(int*)(property->mData);
+							}
+						}
+*/
 					}
 					// If no texture found, use the default one
 					if (me._pTexture == nullptr) {

@@ -32,7 +32,7 @@ D3D::~D3D() {
 	if (_swapChain) _swapChain->Release();
 	if (_bBuffer) _bBuffer->Release();
 	if (_rs) _rs->Release();
-	if (_ss) _ss->Release();
+	if (_ssw) _ssw->Release();
 	if (_dev) _dev->Release();
 	if (_devCon) _devCon->Release();
 }
@@ -248,8 +248,14 @@ void D3D::InitSampler() {
 	sd.MinLOD = 0.0f;
 	sd.MaxLOD = FLT_MAX;
 	sd.MipLODBias = 0.0f;
-	if (FAILED(_dev->CreateSamplerState(&sd, &_ss))) {
-		throw CommonException((LPWSTR)L"Critical error: Unable to creat Direct3D sampler state!");
+	if (FAILED(_dev->CreateSamplerState(&sd, &_ssw))) {
+		throw CommonException((LPWSTR)L"Critical error: Unable to creat Direct3D wrap sampler state!");
+	}
+	sd.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sd.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sd.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	if (FAILED(_dev->CreateSamplerState(&sd, &_ssc))) {
+		throw CommonException((LPWSTR)L"Critical error: Unable to creat Direct3D clamp sampler state!");
 	}
 }
 
