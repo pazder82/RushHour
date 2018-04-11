@@ -268,6 +268,17 @@ void Game::Render() {
 	_d3d->GetDeviceContext()->PSSetSamplers(0, 1, _d3d->GetSStateWrapAddr());
 	_d3d->GetDeviceContext()->PSSetSamplers(1, 1, _d3d->GetSStateClampAddr());
 
+	// Render
+	RenderScene(&cBuffer, matView, matPerspective, lightView, lightPerspective);
+
+	// print FPS info
+	_d2d->PrintInfo();
+
+	// switch the back buffer and the front buffer
+	_d3d->GetSwapChain()->Present(0, 0);
+}
+
+void Game::RenderScene(CBUFFER* pcBuffer, XMMATRIX matView, XMMATRIX matPerspective, XMMATRIX lightView, XMMATRIX lightPerspective) {
 	// Draw model instances
 	for (auto it = _minstances.begin(); it != _minstances.end(); it++) {
 		ModelInstance mi = it->second;
@@ -277,13 +288,13 @@ void Game::Render() {
 		XMMATRIX mvpMatrix = worldMatrix * matView * matPerspective;
 		XMMATRIX lightMvpMatrix = worldMatrix * lightView * lightPerspective;
 		XMMATRIX invTrWorld = XMMatrixInverse(nullptr, XMMatrixTranspose(worldMatrix));
-		cBuffer.world = worldMatrix;
-		cBuffer.mvp = mvpMatrix;
-		cBuffer.lightmvp = lightMvpMatrix;
-		cBuffer.invTrWorld = invTrWorld;
-		cBuffer.specularPower = 100000.0f;
+		pcBuffer->world = worldMatrix;
+		pcBuffer->mvp = mvpMatrix;
+		pcBuffer->lightmvp = lightMvpMatrix;
+		pcBuffer->invTrWorld = invTrWorld;
+		pcBuffer->specularPower = 100000.0f;
 		// Send constant buffer
-		_d3d->GetDeviceContext()->UpdateSubresource(_d3d->GetCBuffer(), 0, 0, &cBuffer, 0, 0);
+		_d3d->GetDeviceContext()->UpdateSubresource(_d3d->GetCBuffer(), 0, 0, pcBuffer, 0, 0);
 
 		for (auto i : mi.GetModel().GetMeshEntries()) {
 			// select texture
@@ -303,22 +314,22 @@ void Game::Render() {
 		XMMATRIX mvpMatrix = worldMatrix * matView * matPerspective;
 		XMMATRIX lightMvpMatrix = worldMatrix * lightView * lightPerspective;
 		XMMATRIX invTrWorld = XMMatrixInverse(nullptr, XMMatrixTranspose(worldMatrix));
-		cBuffer.world = worldMatrix;
-		cBuffer.mvp = mvpMatrix;
-		cBuffer.lightmvp = lightMvpMatrix;
-		cBuffer.invTrWorld = invTrWorld;
+		pcBuffer->world = worldMatrix;
+		pcBuffer->mvp = mvpMatrix;
+		pcBuffer->lightmvp = lightMvpMatrix;
+		pcBuffer->invTrWorld = invTrWorld;
 		// Store vehicle color into constant buffer
 		XMVECTOR vehicleColor = mi.GetColor();
-		cBuffer.diffuseColor = vehicleColor;
-		cBuffer.specularColor = vehicleColor;
+		pcBuffer->diffuseColor = vehicleColor;
+		pcBuffer->specularColor = vehicleColor;
 		float glowIntensity = _ambientColorIntensity + mi.GetGlowLevel();
-		cBuffer.ambientColor = XMVectorSet(vehicleColor.m128_f32[0] * glowIntensity,
+		pcBuffer->ambientColor = XMVectorSet(vehicleColor.m128_f32[0] * glowIntensity,
 			vehicleColor.m128_f32[1] * glowIntensity,
 			vehicleColor.m128_f32[2] * glowIntensity,
 			vehicleColor.m128_f32[3] * glowIntensity);
-		cBuffer.specularPower = 20.0f;
+		pcBuffer->specularPower = 20.0f;
 		// Send constant buffer
-		_d3d->GetDeviceContext()->UpdateSubresource(_d3d->GetCBuffer(), 0, 0, &cBuffer, 0, 0);
+		_d3d->GetDeviceContext()->UpdateSubresource(_d3d->GetCBuffer(), 0, 0, pcBuffer, 0, 0);
 
 		for (auto i : mi.GetModel().GetMeshEntries()) {
 			// select texture
@@ -327,11 +338,6 @@ void Game::Render() {
 		}
 	}
 
-	// print FPS info
-	_d2d->PrintInfo();
-
-	// switch the back buffer and the front buffer
-	_d3d->GetSwapChain()->Present(0, 0);
 }
 
 void Game::Init() {

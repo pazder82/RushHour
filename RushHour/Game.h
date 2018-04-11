@@ -69,6 +69,10 @@ private:
 	const float _ambientColorIntensity = 0.25;
 	bool _glowLevelUp = true;
 
+	// Rendering methods
+	void RenderScene(CBUFFER* pcBuffer, DirectX::XMMATRIX matView, DirectX::XMMATRIX matPerspective, DirectX::XMMATRIX lightView, DirectX::XMMATRIX lightPerspective);
+	void RenderShadow(CBUFFER* pcBuffer, DirectX::XMMATRIX matView, DirectX::XMMATRIX matPerspective, DirectX::XMMATRIX lightView, DirectX::XMMATRIX lightPerspective);
+
 	// Active vehicle methods
 	void UpdateMovementStep(); // If some movement activated, update movement step
 	void UpdateGlowLevel();    // Makes the glow of active vehicle pulse
