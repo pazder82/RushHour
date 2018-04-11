@@ -33,6 +33,7 @@ D3D::~D3D() {
 	if (_bBuffer) _bBuffer->Release();
 	if (_rs) _rs->Release();
 	if (_ssw) _ssw->Release();
+	if (_ssc) _ssc->Release();
 	if (_dev) _dev->Release();
 	if (_devCon) _devCon->Release();
 }
