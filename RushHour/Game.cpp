@@ -230,6 +230,7 @@ void Game::Render() {
 	// *** LIGHTS SECTION
 	XMMATRIX lightView, lightPerspective;
 	XMVECTOR lightPosition = XMVectorSet(-10.0f, 2.0f, 6.0f, 1.0f);
+//	lightPosition = XMVector4Transform(lightPosition, _rotation);
 
 	// Set light view matrix
 	lightView = XMMatrixLookAtLH(
@@ -250,8 +251,9 @@ void Game::Render() {
 	FLOAT bgColor[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
 	_d3d->GetDeviceContext()->ClearRenderTargetView(_d3d->GetBackBuffer(), bgColor);
 
-	// clear the depth buffer
+	// clear the depth buffers (of back buffer and of render texture)
 	_d3d->GetDeviceContext()->ClearDepthStencilView(_d3d->GetZBuffer(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	_d3d->GetDeviceContext()->ClearDepthStencilView(_d3d->GetRTZBuffer(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	// select which vertex buffer to display
 	UINT stride = sizeof(VERTEX);
@@ -268,7 +270,15 @@ void Game::Render() {
 	_d3d->GetDeviceContext()->PSSetSamplers(0, 1, _d3d->GetSStateWrapAddr());
 	_d3d->GetDeviceContext()->PSSetSamplers(1, 1, _d3d->GetSStateClampAddr());
 
-	// Render
+	// Render shadow into texture
+	_d3d->SetRenderTargetRenderTexture();
+	_d3d->SetRenderTextureShaders();
+	RenderScene(&cBuffer, matView, matPerspective, lightView, lightPerspective);
+
+	// Render scene
+	_d3d->SetRenderTargetBackBuffer();
+	_d3d->SetBackBufferShaders();
+	_d3d->GetDeviceContext()->PSSetShaderResources(1, 1, _d3d->GetRenderTextureSRVAddr());
 	RenderScene(&cBuffer, matView, matPerspective, lightView, lightPerspective);
 
 	// print FPS info
