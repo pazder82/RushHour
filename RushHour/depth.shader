@@ -19,12 +19,14 @@ struct PixelInputType {
 /* VERTEX SHADER */
 PixelInputType VShader(float4 position : POSITION) {
 	PixelInputType output;
+	position.w = 1.0f;
 
 	// Calculate the position of the vertex against the world, view, and projection matrices.
-	output.position = mul(lightMvp, position);
+	float4 pos = mul(lightMvp, position);
+	output.position = pos;
 
 	// Store the position value in a second input value for depth value calculations.
-	output.depthPosition = output.position;
+	output.depthPosition = pos;
 	return output;
 }
 

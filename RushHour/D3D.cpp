@@ -8,11 +8,11 @@
 D3D::D3D(HWND hWnd) {
 	CreateDevice(hWnd);
 	// Create backbuffer and its zbuffer
-	CreateDepthBuffer(&_zBuffer);
+	CreateDepthBuffer();
 	CreateRenderTarget();
 	// Create shadow render texture and its zbuffer
-//	CreateDepthBuffer(&_rtzBuffer);
-//	CreateRenderTexture();
+	CreateRenderTextureDepthBuffer();
+	CreateRenderTexture();
 	SetViewport();
 	LoadBackBufferShaders();
 	LoadRenderTextureShaders();
@@ -28,6 +28,7 @@ D3D::~D3D() {
 
 	// release all the stuff
 	if (_zBuffer) _zBuffer->Release();
+	if (_rtzBuffer) _rtzBuffer->Release();
 	if (_layout) _layout->Release();
 	if (_vs) _vs->Release();
 	if (_ps) _ps->Release();
@@ -36,8 +37,8 @@ D3D::~D3D() {
 	if (_cBuffer) _cBuffer->Release();
 	if (_swapChain) _swapChain->Release();
 	if (_bBuffer) _bBuffer->Release();
-	if (_rTexture) _rTexture->Release();
 	if (_rTextureSRV) _rTextureSRV->Release();
+	if (_rTexture) _rTexture->Release();
 	if (_rs) _rs->Release();
 	if (_ssw) _ssw->Release();
 	if (_ssc) _ssc->Release();
@@ -81,7 +82,36 @@ void D3D::CreateDevice(HWND hWnd) {
 	}
 }
 
-void D3D::CreateDepthBuffer(ID3D11DepthStencilView** dsv) {
+void D3D::CreateRenderTextureDepthBuffer() {
+	// create the depth buffer texture
+	D3D11_TEXTURE2D_DESC texd;
+	ZeroMemory(&texd, sizeof(texd));
+	texd.Width = SCREEN_WIDTH;
+	texd.Height = SCREEN_HEIGHT;
+	texd.ArraySize = 1;
+	texd.MipLevels = 1;
+	texd.SampleDesc.Count = 1;
+	texd.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	texd.Usage = D3D11_USAGE_DEFAULT;
+	texd.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	ID3D11Texture2D *pDepthBuffer;
+	if (FAILED(_dev->CreateTexture2D(&texd, NULL, &pDepthBuffer))) {
+		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D depth buffer texture!");
+	}
+
+	// create the depth buffer
+	D3D11_DEPTH_STENCIL_VIEW_DESC dsvd;
+	ZeroMemory(&dsvd, sizeof(dsvd));
+	//dsvd.Format = DXGI_FORMAT_D32_FLOAT;
+	dsvd.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	dsvd.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+	if (FAILED(_dev->CreateDepthStencilView(pDepthBuffer, &dsvd, &(_rtzBuffer)))) {
+		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D depth buffer!");
+	}
+	pDepthBuffer->Release();
+}
+
+void D3D::CreateDepthBuffer() {
 	// create the depth buffer texture
 	D3D11_TEXTURE2D_DESC texd;
 	ZeroMemory(&texd, sizeof(texd));
@@ -104,7 +134,7 @@ void D3D::CreateDepthBuffer(ID3D11DepthStencilView** dsv) {
 	//dsvd.Format = DXGI_FORMAT_D32_FLOAT;
 	dsvd.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	dsvd.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
-	if (FAILED(_dev->CreateDepthStencilView(pDepthBuffer, &dsvd, dsv))) {
+	if (FAILED(_dev->CreateDepthStencilView(pDepthBuffer, &dsvd, &(_zBuffer)))) {
 		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D depth buffer!");
 	}
 	pDepthBuffer->Release();
@@ -123,8 +153,8 @@ void D3D::CreateRenderTarget() {
 }
 
 void D3D::CreateRenderTexture() {
+	ID3D11Texture2D* renderTexture;
 	D3D11_TEXTURE2D_DESC textureDesc;
-	ID3D11Texture2D* renderTexture;        // render texture
 
 	// Initialize the render target texture description.
 	ZeroMemory(&textureDesc, sizeof(textureDesc));
@@ -153,7 +183,7 @@ void D3D::CreateRenderTexture() {
 	renderTargetViewDesc.Texture2D.MipSlice = 0;
 
 	// Create the render target view.
-	if (FAILED(_dev->CreateRenderTargetView(renderTexture, NULL, &_rTexture))) {
+	if (FAILED(_dev->CreateRenderTargetView(renderTexture, &renderTargetViewDesc, &_rTexture))) {
 		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D render texture target view!");
 	}
 
@@ -170,11 +200,10 @@ void D3D::CreateRenderTexture() {
 	}
 
 	renderTexture->Release();
-
 }
 
-void D3D::SetRenderTarget(ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv) {
-	_devCon->OMSetRenderTargets(1, &rtv, dsv);
+void D3D::SetRenderTarget(ID3D11RenderTargetView** rtv, ID3D11DepthStencilView* dsv) {
+	_devCon->OMSetRenderTargets(1, rtv, dsv);
 }
 
 void D3D::SetViewport() {
@@ -215,7 +244,6 @@ void D3D::LoadBackBufferShaders() {
 	if (FAILED(_dev->CreateInputLayout(ied, 3, VS->GetBufferPointer(), VS->GetBufferSize(), &_layout))) {
 		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D input layout!");
 	}
-	_devCon->IASetInputLayout(_layout);
 }
 
 void D3D::LoadRenderTextureShaders() {
@@ -242,15 +270,15 @@ void D3D::LoadRenderTextureShaders() {
 }
 
 void D3D::SetBackBufferShaders() {
+	_devCon->IASetInputLayout(_layout);
 	_devCon->VSSetShader(_vs, 0, 0);
 	_devCon->PSSetShader(_ps, 0, 0);
-	_devCon->IASetInputLayout(_layout);
 }
 
 void D3D::SetRenderTextureShaders() {
+	_devCon->IASetInputLayout(_rtlayout);
 	_devCon->VSSetShader(_rtvs, 0, 0);
 	_devCon->PSSetShader(_rtps, 0, 0);
-	_devCon->IASetInputLayout(_rtlayout);
 }
 
 void D3D::CreateConstantBuffer() {

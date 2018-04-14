@@ -213,7 +213,7 @@ void Game::Render() {
 
 	// *** CAMERA SECTION
 	XMMATRIX matView, matPerspective;
-	XMVECTOR camPosition = XMVectorSet(0.0f, 4.0f, -10.0f, 1.0f);
+	XMVECTOR camPosition = CAMINITPOSITION;
 	camPosition = XMVector4Transform(camPosition, _rotation);
 
 	// Set View matrix
@@ -229,8 +229,7 @@ void Game::Render() {
 
 	// *** LIGHTS SECTION
 	XMMATRIX lightView, lightPerspective;
-	XMVECTOR lightPosition = XMVectorSet(-10.0f, 2.0f, 6.0f, 1.0f);
-//	lightPosition = XMVector4Transform(lightPosition, _rotation);
+	XMVECTOR lightPosition = LIGHTPOSITION;
 
 	// Set light view matrix
 	lightView = XMMatrixLookAtLH(
@@ -239,21 +238,12 @@ void Game::Render() {
 		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)   // the up direction
 	);
 	cBuffer.lightPosition = lightPosition;
-	cBuffer.diffuseColor = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
-	cBuffer.ambientColor = XMVectorSet(_ambientColorIntensity, _ambientColorIntensity, _ambientColorIntensity, 1.0f);
-	cBuffer.specularColor = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// Set light projection matrix
 	lightPerspective = XMMatrixPerspectiveFovLH((FLOAT)XMConvertToRadians(45), (FLOAT)SCREEN_WIDTH / (FLOAT)SCREEN_HEIGHT, 1.0f, 100.0f);
 
 	// *** RENDER SECTION
-	// clear the back buffer to a deep blue
-	FLOAT bgColor[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
-	_d3d->GetDeviceContext()->ClearRenderTargetView(_d3d->GetBackBuffer(), bgColor);
-
-	// clear the depth buffers (of back buffer and of render texture)
-	_d3d->GetDeviceContext()->ClearDepthStencilView(_d3d->GetZBuffer(), D3D11_CLEAR_DEPTH, 1.0f, 0);
-	_d3d->GetDeviceContext()->ClearDepthStencilView(_d3d->GetRTZBuffer(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	FLOAT bgColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 	// select which vertex buffer to display
 	UINT stride = sizeof(VERTEX);
@@ -263,7 +253,6 @@ void Game::Render() {
 
 	// select which primtive type we are using
 	_d3d->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	_d3d->GetDeviceContext()->IASetInputLayout(_d3d->GetLayout());
 
 	// select Rasterizer and Sampler configuration
 	_d3d->GetDeviceContext()->RSSetState(_d3d->GetRState());
@@ -273,12 +262,21 @@ void Game::Render() {
 	// Render shadow into texture
 	_d3d->SetRenderTargetRenderTexture();
 	_d3d->SetRenderTextureShaders();
+	// clear the render texture to black
+	_d3d->GetDeviceContext()->ClearRenderTargetView(_d3d->GetRenderTexture(), bgColor);
+	// clear depth buffer of render texture
+	_d3d->GetDeviceContext()->ClearDepthStencilView(_d3d->GetRTZBuffer(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	RenderScene(&cBuffer, matView, matPerspective, lightView, lightPerspective);
 
 	// Render scene
 	_d3d->SetRenderTargetBackBuffer();
 	_d3d->SetBackBufferShaders();
-	_d3d->GetDeviceContext()->PSSetShaderResources(1, 1, _d3d->GetRenderTextureSRVAddr());
+	// clear the back buffer to a deep blue
+	bgColor[1] = 0.2f; bgColor[2] = 0.4f;
+	_d3d->GetDeviceContext()->ClearRenderTargetView(_d3d->GetBackBuffer(), bgColor);
+	// clear depth buffer of back buffer
+	_d3d->GetDeviceContext()->ClearDepthStencilView(_d3d->GetZBuffer(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	_d3d->GetDeviceContext()->PSSetShaderResources(1, 1, _d3d->GetRenderTextureSRVAddr()); // provide render texture to shader
 	RenderScene(&cBuffer, matView, matPerspective, lightView, lightPerspective);
 
 	// print FPS info
@@ -289,6 +287,11 @@ void Game::Render() {
 }
 
 void Game::RenderScene(CBUFFER* pcBuffer, XMMATRIX matView, XMMATRIX matPerspective, XMMATRIX lightView, XMMATRIX lightPerspective) {
+	// Set lights
+	pcBuffer->diffuseColor = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
+	pcBuffer->ambientColor = XMVectorSet(_ambientColorIntensity, _ambientColorIntensity, _ambientColorIntensity, 1.0f);
+	pcBuffer->specularColor = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
+
 	// Draw model instances
 	for (auto it = _minstances.begin(); it != _minstances.end(); it++) {
 		ModelInstance mi = it->second;
@@ -366,8 +369,8 @@ void Game::Init() {
 	Vehicle miCar(_models.at("car"), XMMatrixScaling(carScale, carScale, carScale), XMVectorSet(0.5f, 0.0f, 0.0f, 0.0f), false, CARLEN);
 	Vehicle miBus(_models.at("bus"), XMMatrixScaling(busScale, busScale, busScale), XMVectorSet(1.2f, 0.0f, 0.0f, 0.0f), true, BUSLEN);
 	ModelInstance miBoard(_models.at("board"), XMMatrixScaling(boardScale1, boardScale1, boardScale2), XMVectorSet(-0.5f, -0.23f, -0.38f, 0.0f), XMMatrixRotationX(XMConvertToRadians(90.0f)));
-	ModelInstance miWallZ(_models.at("wall"), XMMatrixScaling(wallScale, wallScale, wallScale), XMVectorSet(0.57f, 0.0f, 0.49f, 0.0f), XMMatrixIdentity());
-	ModelInstance miWallX(_models.at("wall"), XMMatrixScaling(wallScale, wallScale, wallScale), XMVectorSet(0.55f, 0.0f, 0.64f, 0.0f), XMMatrixIdentity());
+	ModelInstance miWallZ(_models.at("wall"), XMMatrixScaling(wallScale, wallScale, wallScale), XMVectorSet(0.57f, -0.0f, 0.49f, 0.0f), XMMatrixIdentity());
+	ModelInstance miWallX(_models.at("wall"), XMMatrixScaling(wallScale, wallScale, wallScale), XMVectorSet(0.55f, -0.0f, 0.64f, 0.0f), XMMatrixIdentity());
 
 	// Create base board as copy of base instance miBoard
 	_minstances.insert(make_pair(string("board"), miBoard));

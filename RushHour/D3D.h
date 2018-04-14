@@ -20,8 +20,8 @@ public:
 	void CreateVertexBuffer(std::vector<VERTEX> OurVertices);
 	void CreateIndexBuffer(std::vector<UINT> OurIndices);
 
-	void SetRenderTargetBackBuffer() { SetRenderTarget(_bBuffer, _zBuffer); }
-	void SetRenderTargetRenderTexture() { SetRenderTarget(_rTexture, _rtzBuffer); }
+	void SetRenderTargetBackBuffer() { SetRenderTarget(&(_bBuffer), _zBuffer); }
+	void SetRenderTargetRenderTexture() { SetRenderTarget(&(_rTexture), _rtzBuffer); }
 	void SetBackBufferShaders();
 	void SetRenderTextureShaders();
 
@@ -30,6 +30,7 @@ public:
 	ID3D11Device* GetDevice() const { return _dev; }
 	ID3D11DeviceContext* GetDeviceContext() const { return _devCon; }
 	ID3D11RenderTargetView* GetBackBuffer() const { return _bBuffer; }
+	ID3D11RenderTargetView* GetRenderTexture() const { return _rTexture; }
 	ID3D11ShaderResourceView** GetRenderTextureSRVAddr() { return &(_rTextureSRV); }
 	ID3D11DepthStencilView* GetZBuffer() const { return _zBuffer; }
 	ID3D11DepthStencilView* GetRTZBuffer() const { return _rtzBuffer; }
@@ -70,10 +71,11 @@ private:
 	ID3D11SamplerState* _ssc;               // sampler state clamp
 
 	void CreateDevice(HWND hWnd);
-	void CreateDepthBuffer(ID3D11DepthStencilView** dsv);
+	void CreateDepthBuffer();
 	void CreateRenderTarget();
+	void CreateRenderTextureDepthBuffer();
 	void CreateRenderTexture();
-	void SetRenderTarget(ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv);
+	void SetRenderTarget(ID3D11RenderTargetView** rtv, ID3D11DepthStencilView* dsv);
 	void SetViewport();
 	void LoadBackBufferShaders();
 	void LoadRenderTextureShaders();
