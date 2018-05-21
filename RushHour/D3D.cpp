@@ -10,12 +10,8 @@ D3D::D3D(HWND hWnd) {
 	// Create backbuffer and its zbuffer
 	CreateDepthBuffer();
 	CreateRenderTarget();
-	// Create shadow render texture and its zbuffer
-	CreateRenderTextureDepthBuffer();
-	CreateRenderTexture();
 	SetViewport();
 	LoadBackBufferShaders();
-	LoadRenderTextureShaders();
 	CreateConstantBuffer();
 	InitRasterizer();
 	InitSampler();
@@ -28,7 +24,6 @@ D3D::~D3D() {
 
 	// release all the stuff
 	if (_zBuffer) _zBuffer->Release();
-	if (_rtzBuffer) _rtzBuffer->Release();
 	if (_layout) _layout->Release();
 	if (_vs) _vs->Release();
 	if (_ps) _ps->Release();
@@ -37,8 +32,6 @@ D3D::~D3D() {
 	if (_cBuffer) _cBuffer->Release();
 	if (_swapChain) _swapChain->Release();
 	if (_bBuffer) _bBuffer->Release();
-	if (_rTextureSRV) _rTextureSRV->Release();
-	if (_rTexture) _rTexture->Release();
 	if (_rs) _rs->Release();
 	if (_ssw) _ssw->Release();
 	if (_ssc) _ssc->Release();
@@ -54,7 +47,7 @@ void D3D::CreateDevice(HWND hWnd) {
 	scd.BufferDesc.Width = SCREEN_WIDTH;                    // set the back buffer width
 	scd.BufferDesc.Height = SCREEN_HEIGHT;                  // set the back buffer height
 	scd.BufferCount = 1;                                    // one back buffer
-	scd.BufferDesc.RefreshRate.Numerator = 0;									// refresh rate: 0 -> do not care
+	scd.BufferDesc.RefreshRate.Numerator = 0;				// refresh rate: 0 -> do not care
 	scd.BufferDesc.RefreshRate.Denominator = 1;
 	scd.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;     // use 32-bit color
 	scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;      // how swap chain is to be used
@@ -80,35 +73,6 @@ void D3D::CreateDevice(HWND hWnd) {
 	if (FAILED(_dev->QueryInterface(__uuidof(IDXGIDevice), reinterpret_cast<LPVOID*>(&_dxgiDevice)))) {
 		throw CommonException((LPWSTR)L"Critical error: Unable to get Direct3D DXGI device!");
 	}
-}
-
-void D3D::CreateRenderTextureDepthBuffer() {
-	// create the depth buffer texture
-	D3D11_TEXTURE2D_DESC texd;
-	ZeroMemory(&texd, sizeof(texd));
-	texd.Width = SCREEN_WIDTH;
-	texd.Height = SCREEN_HEIGHT;
-	texd.ArraySize = 1;
-	texd.MipLevels = 1;
-	texd.SampleDesc.Count = 1;
-	texd.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	texd.Usage = D3D11_USAGE_DEFAULT;
-	texd.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-	ID3D11Texture2D *pDepthBuffer;
-	if (FAILED(_dev->CreateTexture2D(&texd, NULL, &pDepthBuffer))) {
-		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D depth buffer texture!");
-	}
-
-	// create the depth buffer
-	D3D11_DEPTH_STENCIL_VIEW_DESC dsvd;
-	ZeroMemory(&dsvd, sizeof(dsvd));
-	//dsvd.Format = DXGI_FORMAT_D32_FLOAT;
-	dsvd.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	dsvd.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
-	if (FAILED(_dev->CreateDepthStencilView(pDepthBuffer, &dsvd, &(_rtzBuffer)))) {
-		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D depth buffer!");
-	}
-	pDepthBuffer->Release();
 }
 
 void D3D::CreateDepthBuffer() {
@@ -150,56 +114,6 @@ void D3D::CreateRenderTarget() {
 		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D target view!");
 	}
 	pBackBuffer->Release();
-}
-
-void D3D::CreateRenderTexture() {
-	ID3D11Texture2D* renderTexture;
-	D3D11_TEXTURE2D_DESC textureDesc;
-
-	// Initialize the render target texture description.
-	ZeroMemory(&textureDesc, sizeof(textureDesc));
-
-	// Setup the render target texture description.
-	textureDesc.Width = SCREEN_WIDTH;
-	textureDesc.Height = SCREEN_HEIGHT;
-	textureDesc.MipLevels = 1;
-	textureDesc.ArraySize = 1;
-	textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-	textureDesc.SampleDesc.Count = 1;
-	textureDesc.Usage = D3D11_USAGE_DEFAULT;
-	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-	textureDesc.CPUAccessFlags = 0;
-	textureDesc.MiscFlags = 0;
-
-	// Create the render target texture.
-	if (FAILED(_dev->CreateTexture2D(&textureDesc, NULL, &renderTexture))) {
-		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D render texture!");
-	}
-
-	// Setup the description of the render target view.
-	D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
-	renderTargetViewDesc.Format = textureDesc.Format;
-	renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-	renderTargetViewDesc.Texture2D.MipSlice = 0;
-
-	// Create the render target view.
-	if (FAILED(_dev->CreateRenderTargetView(renderTexture, &renderTargetViewDesc, &_rTexture))) {
-		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D render texture target view!");
-	}
-
-	// Setup the description of the shader resource view.
-	D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
-	shaderResourceViewDesc.Format = textureDesc.Format;
-	shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
-	shaderResourceViewDesc.Texture2D.MipLevels = 1;
-
-	// Create the shader resource view.
-	if (FAILED(_dev->CreateShaderResourceView(renderTexture, &shaderResourceViewDesc, &_rTextureSRV))) {
-		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D render texture shader resource view!");
-	}
-
-	renderTexture->Release();
 }
 
 void D3D::SetRenderTarget(ID3D11RenderTargetView** rtv, ID3D11DepthStencilView* dsv) {
@@ -246,39 +160,10 @@ void D3D::LoadBackBufferShaders() {
 	}
 }
 
-void D3D::LoadRenderTextureShaders() {
-	// load and compile vertex and pixel shader
-	ID3D10Blob *VS, *PS;
-	D3DCompileFromFile(L"depth.shader", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VShader", "vs_4_0", 0, 0, &VS, NULL);
-	D3DCompileFromFile(L"depth.shader", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PShader", "ps_4_0", 0, 0, &PS, NULL);
-	if (FAILED(_dev->CreateVertexShader(VS->GetBufferPointer(), VS->GetBufferSize(), NULL, &_rtvs))) {
-		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D vertex shader!");
-	}
-	if (FAILED(_dev->CreatePixelShader(PS->GetBufferPointer(), PS->GetBufferSize(), NULL, &_rtps))) {
-		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D pixel shader!");
-	}
-
-	// create the input layout object
-	D3D11_INPUT_ELEMENT_DESC ied[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
-
-	if (FAILED(_dev->CreateInputLayout(ied, 1, VS->GetBufferPointer(), VS->GetBufferSize(), &_rtlayout))) {
-		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D input layout!");
-	}
-}
-
 void D3D::SetBackBufferShaders() {
 	_devCon->IASetInputLayout(_layout);
 	_devCon->VSSetShader(_vs, 0, 0);
 	_devCon->PSSetShader(_ps, 0, 0);
-}
-
-void D3D::SetRenderTextureShaders() {
-	_devCon->IASetInputLayout(_rtlayout);
-	_devCon->VSSetShader(_rtvs, 0, 0);
-	_devCon->PSSetShader(_rtps, 0, 0);
 }
 
 void D3D::CreateConstantBuffer() {

@@ -3,6 +3,7 @@
 #include "Vehicle.h"
 #include "D2D.h"
 #include "D3D.h"
+#include "ShadowRenderer.h"
 #include <vector>
 #include <map>
 #include <string>
@@ -20,7 +21,7 @@
 class Game {
 public:
 	Game() = delete;
-	Game(HWND hWnd) { _d3d = new D3D(hWnd); _d2d = new D2D(_d3d); }
+	Game(HWND hWnd) { _d3d = new D3D(hWnd); _d2d = new D2D(_d3d); _sr = new ShadowRenderer(_d3d); }
 	~Game() { delete _d2d; delete _d3d; }
 	enum Direction_t { Forward, Backward };
 
@@ -49,6 +50,7 @@ private:
 	// DirectX objects
 	D2D* _d2d;
 	D3D* _d3d;
+	ShadowRenderer* _sr;
 
 	// Models and objects containers
 	std::map<std::string, Model> _models;
@@ -71,7 +73,6 @@ private:
 
 	// Rendering methods
 	void RenderScene(CBUFFER* pcBuffer, DirectX::XMMATRIX matView, DirectX::XMMATRIX matPerspective, DirectX::XMMATRIX lightView, DirectX::XMMATRIX lightPerspective);
-	void RenderShadow(CBUFFER* pcBuffer, DirectX::XMMATRIX matView, DirectX::XMMATRIX matPerspective, DirectX::XMMATRIX lightView, DirectX::XMMATRIX lightPerspective);
 
 	// Active vehicle methods
 	void UpdateMovementStep(); // If some movement activated, update movement step
