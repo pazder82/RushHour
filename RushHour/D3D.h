@@ -6,10 +6,12 @@
 #include "RushHour.h"
 #include "D3DSupplementary.h"
 
-class ShadowRenderer;
+class TextureRenderer;
+class DepthRenderer;
 
 class D3D {
-	friend class ShadowRenderer;
+	friend class TextureRenderer;
+	friend class DepthRenderer;
 public:
 	D3D() = delete;
 	D3D(HWND hWnd);

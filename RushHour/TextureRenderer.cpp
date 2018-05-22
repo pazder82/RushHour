@@ -1,22 +1,25 @@
 #include "stdafx.h"
+#include "TextureRenderer.h"
+
+
+#include "stdafx.h"
 #include <d3dcompiler.h>
-#include "ShadowRenderer.h"
+#include "TextureRenderer.h"
 #include "CommonException.h"
 
-ShadowRenderer::ShadowRenderer(D3D* d3d) : _d3d(d3d) {
+TextureRenderer::TextureRenderer(D3D* d3d) : _d3d(d3d) {
 	// Create shadow render texture and its zbuffer
 	CreateRenderTextureDepthBuffer();
 	CreateRenderTexture();
-	LoadRenderTextureShaders();
 }
 
-ShadowRenderer::~ShadowRenderer() {
+TextureRenderer::~TextureRenderer() {
 	if (_rtzBuffer) _rtzBuffer->Release();
 	if (_rTextureSRV) _rTextureSRV->Release();
 	if (_rTexture) _rTexture->Release();
 }
 
-void ShadowRenderer::CreateRenderTextureDepthBuffer() {
+void TextureRenderer::CreateRenderTextureDepthBuffer() {
 	// create the depth buffer texture
 	D3D11_TEXTURE2D_DESC texd;
 	ZeroMemory(&texd, sizeof(texd));
@@ -45,7 +48,7 @@ void ShadowRenderer::CreateRenderTextureDepthBuffer() {
 	pDepthBuffer->Release();
 }
 
-void ShadowRenderer::CreateRenderTexture() {
+void TextureRenderer::CreateRenderTexture() {
 	ID3D11Texture2D* renderTexture;
 	D3D11_TEXTURE2D_DESC textureDesc;
 
@@ -95,32 +98,8 @@ void ShadowRenderer::CreateRenderTexture() {
 	renderTexture->Release();
 }
 
-void ShadowRenderer::SetRenderTextureShaders() {
+void TextureRenderer::SetRenderTextureShaders() {
 	_d3d->_devCon->IASetInputLayout(_rtlayout);
 	_d3d->_devCon->VSSetShader(_rtvs, 0, 0);
 	_d3d->_devCon->PSSetShader(_rtps, 0, 0);
 }
-
-void ShadowRenderer::LoadRenderTextureShaders() {
-	// load and compile vertex and pixel shader
-	ID3D10Blob *VS, *PS;
-	D3DCompileFromFile(L"depth.shader", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VShader", "vs_4_0", 0, 0, &VS, NULL);
-	D3DCompileFromFile(L"depth.shader", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PShader", "ps_4_0", 0, 0, &PS, NULL);
-	if (FAILED(_d3d->_dev->CreateVertexShader(VS->GetBufferPointer(), VS->GetBufferSize(), NULL, &_rtvs))) {
-		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D vertex shader!");
-	}
-	if (FAILED(_d3d->_dev->CreatePixelShader(PS->GetBufferPointer(), PS->GetBufferSize(), NULL, &_rtps))) {
-		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D pixel shader!");
-	}
-
-	// create the input layout object
-	D3D11_INPUT_ELEMENT_DESC ied[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
-
-	if (FAILED(_d3d->_dev->CreateInputLayout(ied, 1, VS->GetBufferPointer(), VS->GetBufferSize(), &_rtlayout))) {
-		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D input layout!");
-	}
-}
-
