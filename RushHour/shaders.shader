@@ -17,7 +17,7 @@ struct PixelInputType {
 	float3 normal : NORMAL;
 	float3 viewDirection : TEXCOORD1;
 	float3 lightVec : TEXCOORD2;
-	float4 lightViewPosition : TEXCOORD3;
+	float4 viewPosition : TEXCOORD3;
 };
 
 /* VERTEX SHADER */
@@ -31,7 +31,7 @@ PixelInputType VShader(float4 position : POSITION, float3 normal : NORMAL, float
 	output.normal = normalize(mul((float3x3)trInvWorld, normal));
 	output.viewDirection = -(normalize(camPosition.xyz - worldposition));
 	output.lightVec = normalize(lightPos.xyz - worldposition);
-	output.lightViewPosition = mul(lightMvp, position);
+	output.viewPosition = mul(mvp, position);
 
 	return output;
 }
@@ -54,40 +54,37 @@ float4 PShader(PixelInputType input) : SV_TARGET
 
 	// Calculate the projected texture coordinates.
 	float2 projectTexCoord;
-	projectTexCoord.x = input.lightViewPosition.x / input.lightViewPosition.w / 2.0f + 0.5f;
-	projectTexCoord.y = -input.lightViewPosition.y / input.lightViewPosition.w / 2.0f + 0.5f;
+	projectTexCoord.x = input.viewPosition.x / input.viewPosition.w / 2.0f + 0.5f;
+	projectTexCoord.y = -input.viewPosition.y / input.viewPosition.w / 2.0f + 0.5f;
 	// Determine if the projected coordinates are in the 0 to 1 range.  If so then this pixel is in the view of the light.
 	if ((saturate(projectTexCoord.x) == projectTexCoord.x) && (saturate(projectTexCoord.y) == projectTexCoord.y)) {
 		// Sample the shadow map depth value from the depth texture using the sampler at the projected texture coordinate location.
-		float depthValue = depthMapTexture.Sample(sampleTypeClamp, projectTexCoord).r;
-		//depthValue = 0.92f;
 
 		// Calculate the depth of the light.
-		float lightDepthValue = input.lightViewPosition.z / input.lightViewPosition.w;
+		float lightDepthValue = input.viewPosition.z / input.viewPosition.w;
 
 		// Subtract the bias from the lightdepthvalue.
 		lightDepthValue = lightDepthValue - bias;
 
-		// Compare the depth of the shadow map value and the depth of the light to determine whether to shadow or to light this pixel.
-		// If the light is in front of the object then light the pixel, if not then shadow this pixel since an object (occluder) is casting a shadow on it.
-		if (lightDepthValue < depthValue) {
+		// DIFFUSE LIGHT
+		float lightIntensity = saturate(dot(input.normal, input.lightVec));
+		color += diffuseCol * lightIntensity;
+		color = saturate(color);
 
-			// DIFFUSE LIGHT
-			float lightIntensity = saturate(dot(input.normal, input.lightVec));
-			color += diffuseCol * lightIntensity;
-			color = saturate(color);
-
-			// SPECULAR LIGHT
-			float3 reflectedLight = reflect(input.lightVec, input.normal);
-			float specularFactor = saturate(dot(reflectedLight, input.viewDirection));
-			float dampedFactor = pow(specularFactor, specularPow);
-			specular = dampedFactor * specularCol;
-		}
+		// SPECULAR LIGHT
+		float3 reflectedLight = reflect(input.lightVec, input.normal);
+		float specularFactor = saturate(dot(reflectedLight, input.viewDirection));
+		float dampedFactor = pow(specularFactor, specularPow);
+		specular = dampedFactor * specularCol;
 	}
 
 	// COMBINE ALL LIGHTS AND TEXTURES TOGETHER
 	color *= modelTexture.Sample(sampleTypeWrap, input.texCoord);
 	color = saturate(color + specular);
 
+	// Sample the shadow value from the shadow texture using the sampler at the projected texture coordinate location.
+	float shadowValue = shadowTexture.Sample(sampleTypeClamp, projectTexCoord).r;
+
+	color *= shadowValue;
 	return color;
 }

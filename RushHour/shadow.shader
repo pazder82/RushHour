@@ -48,8 +48,8 @@ float4 PShader(PixelInputType input) : SV_TARGET
     // Set the bias value for fixing the floating point precision issues.
     float bias = 0.001f;
 
-    // Set the default output color to be black (shadow).
-    float4 color = float4(0.0f, 0.0f, 0.0f, 1.0f);
+    // Set the default output color to be nearly black (shadow).
+    float4 color = float4(0.25f, 0.25f, 0.25f, 1.0f);
 
 	// Calculate the projected texture coordinates.
 	float2 projectTexCoord;
