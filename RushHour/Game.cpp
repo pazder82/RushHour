@@ -7,6 +7,20 @@
 using namespace DirectX;
 using namespace std;
 
+Game::Game(HWND hWnd) { 
+	_d3d = new D3D(hWnd); 
+	_d2d = new D2D(_d3d); 
+	_depthRenderer = new DepthRenderer(_d3d); 
+	_shadowRenderer = new ShadowRenderer(_d3d); 
+}
+
+Game::~Game() { 
+	if (_d2d) delete _d2d; 
+	if (_d3d) delete _d3d; 
+	if (_depthRenderer) delete _depthRenderer;
+	if (_shadowRenderer) delete _shadowRenderer;
+}
+
 // Called once per frame, rotates the cube and calculates the model and view matrices.
 void Game::Update(double frameTime) {
 	_frameTime = frameTime;
@@ -260,12 +274,22 @@ void Game::Render() {
 	_d3d->GetDeviceContext()->PSSetSamplers(1, 1, _d3d->GetSStateClampAddr());
 
 	// Render depth into texture
-	_dr->SetRenderTargetRenderTexture();
-	_dr->SetRenderTextureShaders();
+	_depthRenderer->SetRenderTargetRenderTexture();
+	_depthRenderer->SetRenderTextureShaders();
 	// clear the render texture to black
-	_d3d->GetDeviceContext()->ClearRenderTargetView(_dr->GetRenderTexture(), bgColor);
+	_d3d->GetDeviceContext()->ClearRenderTargetView(_depthRenderer->GetRenderTexture(), bgColor);
 	// clear depth buffer of render texture
-	_d3d->GetDeviceContext()->ClearDepthStencilView(_dr->GetRTZBuffer(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	_d3d->GetDeviceContext()->ClearDepthStencilView(_depthRenderer->GetRTZBuffer(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	RenderScene(&cBuffer, matView, matPerspective, lightView, lightPerspective);
+
+	// Render shadow into texture
+	_shadowRenderer->SetRenderTargetRenderTexture();
+	_shadowRenderer->SetRenderTextureShaders();
+	// clear the render texture to black
+	_d3d->GetDeviceContext()->ClearRenderTargetView(_shadowRenderer->GetRenderTexture(), bgColor);
+	// clear depth buffer of render texture
+	_d3d->GetDeviceContext()->ClearDepthStencilView(_shadowRenderer->GetRTZBuffer(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	_d3d->GetDeviceContext()->PSSetShaderResources(1, 1, _depthRenderer->GetRenderTextureSRVAddr()); // provide render texture to shader
 	RenderScene(&cBuffer, matView, matPerspective, lightView, lightPerspective);
 
 	// Render scene
@@ -276,7 +300,7 @@ void Game::Render() {
 	_d3d->GetDeviceContext()->ClearRenderTargetView(_d3d->GetBackBuffer(), bgColor);
 	// clear depth buffer of back buffer
 	_d3d->GetDeviceContext()->ClearDepthStencilView(_d3d->GetZBuffer(), D3D11_CLEAR_DEPTH, 1.0f, 0);
-	_d3d->GetDeviceContext()->PSSetShaderResources(1, 1, _dr->GetRenderTextureSRVAddr()); // provide render texture to shader
+	_d3d->GetDeviceContext()->PSSetShaderResources(2, 1, _shadowRenderer->GetRenderTextureSRVAddr()); // provide render texture to shader
 	RenderScene(&cBuffer, matView, matPerspective, lightView, lightPerspective);
 
 	// print FPS info

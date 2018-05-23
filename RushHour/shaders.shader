@@ -38,7 +38,8 @@ PixelInputType VShader(float4 position : POSITION, float3 normal : NORMAL, float
 
 /* PIXEL SHADER */
 Texture2D modelTexture : register(t0);
-Texture2D depthMapTexture : register(t1); // texture for shadow projection
+Texture2D depthMapTexture : register(t1); // depth texture for shadow projection
+Texture2D shadowTexture : register(t2);   // texture with shadow
 SamplerState sampleTypeWrap : register(s0);
 SamplerState sampleTypeClamp : register(s1); // sampler for shadow projection
 

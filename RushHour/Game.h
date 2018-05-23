@@ -1,13 +1,14 @@
+#include <vector>
+#include <map>
+#include <string>
+#include <DirectXMath.h>
 #include "D3DSupplementary.h"
 #include "Model.h"
 #include "Vehicle.h"
 #include "D2D.h"
 #include "D3D.h"
 #include "DepthRenderer.h"
-#include <vector>
-#include <map>
-#include <string>
-#include <DirectXMath.h>
+#include "ShadowRenderer.h"
 
 #define VEH(X) _vehicles.at(std::string(#X))
 #define MI(X) _minstances.at(std::string(#X))
@@ -21,8 +22,8 @@
 class Game {
 public:
 	Game() = delete;
-	Game(HWND hWnd) { _d3d = new D3D(hWnd); _d2d = new D2D(_d3d); _dr = new DepthRenderer(_d3d); }
-	~Game() { delete _d2d; delete _d3d; }
+	Game(HWND hWnd);
+	~Game();
 	enum Direction_t { Forward, Backward };
 
 	void Init();
@@ -48,9 +49,10 @@ private:
 	double _frameTime = 0.0;
 
 	// DirectX objects
-	D2D* _d2d;
-	D3D* _d3d;
-	DepthRenderer* _dr;
+	D2D* _d2d = nullptr;
+	D3D* _d3d = nullptr;
+	DepthRenderer* _depthRenderer = nullptr;
+	ShadowRenderer* _shadowRenderer = nullptr;
 
 	// Models and objects containers
 	std::map<std::string, Model> _models;

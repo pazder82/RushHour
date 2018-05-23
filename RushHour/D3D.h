@@ -8,10 +8,12 @@
 
 class TextureRenderer;
 class DepthRenderer;
+class ShadowRenderer;
 
 class D3D {
 	friend class TextureRenderer;
 	friend class DepthRenderer;
+	friend class ShadowRenderer;
 public:
 	D3D() = delete;
 	D3D(HWND hWnd);

@@ -39,6 +39,7 @@ PixelInputType VShader(float4 position : POSITION, float3 normal : NORMAL, float
 /* PIXEL SHADER */
 Texture2D modelTexture : register(t0);
 Texture2D depthMapTexture : register(t1); // texture for shadow projection
+Texture2D shadowTexture : register(t2);   // texture with shadow
 SamplerState sampleTypeWrap : register(s0);
 SamplerState sampleTypeClamp : register(s1); // sampler for shadow projection
 
@@ -48,7 +49,7 @@ float4 PShader(PixelInputType input) : SV_TARGET
     float bias = 0.001f;
 
     // Set the default output color to be black (shadow).
-    color = float4(0.0f, 0.0f, 0.0f, 1.0f);
+    float4 color = float4(0.0f, 0.0f, 0.0f, 1.0f);
 
 	// Calculate the projected texture coordinates.
 	float2 projectTexCoord;
