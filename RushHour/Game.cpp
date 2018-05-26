@@ -12,6 +12,8 @@ Game::Game(HWND hWnd) {
 	_d2d = new D2D(_d3d); 
 	_depthRenderer = new DepthRenderer(_d3d); 
 	_shadowRenderer = new ShadowRenderer(_d3d); 
+	_downsampledWindow = new OrthoWindow(_d3d, SCREEN_HEIGHT / 2, SCREEN_HEIGHT / 2);
+	_upsampledWindow = new OrthoWindow(_d3d, SCREEN_HEIGHT, SCREEN_HEIGHT);
 }
 
 Game::~Game() { 
@@ -19,6 +21,8 @@ Game::~Game() {
 	if (_d3d) delete _d3d; 
 	if (_depthRenderer) delete _depthRenderer;
 	if (_shadowRenderer) delete _shadowRenderer;
+	if (_downsampledWindow) delete _downsampledWindow;
+	if (_upsampledWindow) delete _upsampledWindow;
 }
 
 // Called once per frame, rotates the cube and calculates the model and view matrices.
@@ -257,49 +261,18 @@ void Game::Render() {
 	lightPerspective = XMMatrixPerspectiveFovLH((FLOAT)XMConvertToRadians(45), (FLOAT)SCREEN_WIDTH / (FLOAT)SCREEN_HEIGHT, 1.0f, 100.0f);
 
 	// *** RENDER SECTION
-	FLOAT bgColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-
-	// select which vertex buffer to display
-	UINT stride = sizeof(VERTEX);
-	UINT offset = 0;
-	_d3d->GetDeviceContext()->IASetVertexBuffers(0, 1, _d3d->GetVBufferAddr(), &stride, &offset);
-	_d3d->GetDeviceContext()->IASetIndexBuffer(_d3d->GetIBuffer(), DXGI_FORMAT_R32_UINT, 0);
-
-	// select which primtive type we are using
-	_d3d->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	// select Rasterizer and Sampler configuration
-	_d3d->GetDeviceContext()->RSSetState(_d3d->GetRState());
-	_d3d->GetDeviceContext()->PSSetSamplers(0, 1, _d3d->GetSStateWrapAddr());
-	_d3d->GetDeviceContext()->PSSetSamplers(1, 1, _d3d->GetSStateClampAddr());
-
-	// Render depth into texture
-	_depthRenderer->SetRenderTargetRenderTexture();
-	_depthRenderer->SetRenderTextureShaders();
-	// clear the render texture to black
-	_d3d->GetDeviceContext()->ClearRenderTargetView(_depthRenderer->GetRenderTexture(), bgColor);
-	// clear depth buffer of render texture
-	_d3d->GetDeviceContext()->ClearDepthStencilView(_depthRenderer->GetRTZBuffer(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	// Render depth texture
+	_depthRenderer->ConfigureRendering();
 	RenderScene(&cBuffer, matView, matPerspective, lightView, lightPerspective);
 
 	// Render shadow into texture
-	_shadowRenderer->SetRenderTargetRenderTexture();
-	_shadowRenderer->SetRenderTextureShaders();
-	// clear the render texture to black
-	_d3d->GetDeviceContext()->ClearRenderTargetView(_shadowRenderer->GetRenderTexture(), bgColor);
-	// clear depth buffer of render texture
-	_d3d->GetDeviceContext()->ClearDepthStencilView(_shadowRenderer->GetRTZBuffer(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	_shadowRenderer->ConfigureRendering();
+	//_shadowRenderer->ConfigureRenderingDebug();
 	_d3d->GetDeviceContext()->PSSetShaderResources(1, 1, _depthRenderer->GetRenderTextureSRVAddr()); // provide depth texture to shader
 	RenderScene(&cBuffer, matView, matPerspective, lightView, lightPerspective);
 
 	// Render scene
-	_d3d->SetRenderTargetBackBuffer();
-	_d3d->SetBackBufferShaders();
-	// clear the back buffer to a deep blue
-	bgColor[1] = 0.2f; bgColor[2] = 0.4f;
-	_d3d->GetDeviceContext()->ClearRenderTargetView(_d3d->GetBackBuffer(), bgColor);
-	// clear depth buffer of back buffer
-	_d3d->GetDeviceContext()->ClearDepthStencilView(_d3d->GetZBuffer(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	_d3d->ConfigureRenderering();
 	_d3d->GetDeviceContext()->PSSetShaderResources(2, 1, _shadowRenderer->GetRenderTextureSRVAddr()); // provide shadow texture to shader
 	RenderScene(&cBuffer, matView, matPerspective, lightView, lightPerspective);
 

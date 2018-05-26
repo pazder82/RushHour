@@ -19,6 +19,7 @@ class TextureRenderer {
 		void SetRenderTargetRenderTexture() { _d3d->SetRenderTarget(&(_rTexture), _rtzBuffer); }
 		void SetRenderTextureShaders();
 		virtual void LoadRenderTextureShaders() = 0;
+		virtual void ConfigureRendering() = 0;
 
 	protected:
 		D3D * _d3d;

@@ -15,6 +15,8 @@ public:
 	~ShadowRenderer() {};
 
 	void LoadRenderTextureShaders() override;
+	void ConfigureRendering() override;
+	void ConfigureRenderingDebug();
 
 };
 

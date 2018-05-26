@@ -15,6 +15,7 @@ public:
 	~DepthRenderer() {};
 
 	void LoadRenderTextureShaders() override;
+	void ConfigureRendering() override;
 
 };
 

@@ -9,6 +9,7 @@
 #include "D3D.h"
 #include "DepthRenderer.h"
 #include "ShadowRenderer.h"
+#include "OrthoWindow.h"
 
 #define VEH(X) _vehicles.at(std::string(#X))
 #define MI(X) _minstances.at(std::string(#X))
@@ -53,6 +54,9 @@ private:
 	D3D* _d3d = nullptr;
 	DepthRenderer* _depthRenderer = nullptr;
 	ShadowRenderer* _shadowRenderer = nullptr;
+	OrthoWindow* _downsampledWindow = nullptr;
+	OrthoWindow* _upsampledWindow = nullptr;
+
 
 	// Models and objects containers
 	std::map<std::string, Model> _models;

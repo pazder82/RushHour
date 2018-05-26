@@ -50,11 +50,8 @@ OrthoWindow::OrthoWindow(D3D* d3d, UINT windowWidth, UINT windowHeight) : _d3d(d
 	// Load the index vector with data
 	_objectIndices.insert(_objectIndices.end(), { 0, 1, 2, 3, 4, 5 });
 
-	// Create vertex buffer
-	D3D11_BUFFER_DESC bd;
-	D3D11_SUBRESOURCE_DATA vertexData, indexData;
-
 	// Create a vertex buffer
+	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
 	bd.Usage = D3D11_USAGE_DYNAMIC;
 	bd.ByteWidth = sizeof(VERTEX) * _objectVertices.size();

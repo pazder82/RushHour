@@ -9,6 +9,8 @@ cbuffer ConstantBuffer {
 	float4 ambientCol;  // the ambient light's color
 	float specularPow;  // the specular light's power
 	float4 specularCol; // the specular light's color
+	float downsampledScreenWidth; 
+	float downsampledScreenHeight;
 }
 
 struct PixelInputType {

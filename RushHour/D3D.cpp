@@ -120,6 +120,39 @@ void D3D::SetRenderTarget(ID3D11RenderTargetView** rtv, ID3D11DepthStencilView* 
 	_devCon->OMSetRenderTargets(1, rtv, dsv);
 }
 
+void D3D::SetBuffers() {
+	// select which vertex buffer to display
+	UINT stride = sizeof(VERTEX);
+	UINT offset = 0;
+	_devCon->IASetVertexBuffers(0, 1, GetVBufferAddr(), &stride, &offset);
+	_devCon->IASetIndexBuffer(GetIBuffer(), DXGI_FORMAT_R32_UINT, 0);
+	_devCon->VSSetConstantBuffers(0, 1, &_cBuffer);
+	_devCon->PSSetConstantBuffers(0, 1, &_cBuffer);
+}
+
+void D3D::ConfigureRenderering() {
+	SetBuffers(); // Set default Vertex, Index and Constant buffer
+
+	// select which primtive type we are using
+	GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// select Rasterizer and Sampler configuration
+	GetDeviceContext()->RSSetState(GetRState());
+	GetDeviceContext()->PSSetSamplers(0, 1, GetSStateWrapAddr());
+	GetDeviceContext()->PSSetSamplers(1, 1, GetSStateClampAddr());
+
+	// set backbuffer as a rendertarget
+	SetRenderTargetBackBuffer();
+	SetBackBufferShaders();					
+
+	// clear the render texture to deep blue
+	FLOAT bgColor[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
+	GetDeviceContext()->ClearRenderTargetView(GetBackBuffer(), bgColor);
+	// clear depth buffer of back buffer
+	GetDeviceContext()->ClearDepthStencilView(GetZBuffer(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+}
+
 void D3D::SetViewport() {
 	// set the viewport
 	D3D11_VIEWPORT viewport;
@@ -176,8 +209,6 @@ void D3D::CreateConstantBuffer() {
 	if (FAILED(_dev->CreateBuffer(&bd, NULL, &_cBuffer))) {
 		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D constant buffer!");
 	}
-	_devCon->VSSetConstantBuffers(0, 1, &_cBuffer);
-	_devCon->PSSetConstantBuffers(0, 1, &_cBuffer);
 }
 
 void D3D::CreateVertexBuffer(std::vector<VERTEX> OurVertices) {

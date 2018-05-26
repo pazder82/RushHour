@@ -6,14 +6,7 @@
 #include "RushHour.h"
 #include "D3DSupplementary.h"
 
-class TextureRenderer;
-class DepthRenderer;
-class ShadowRenderer;
-
 class D3D {
-	friend class TextureRenderer;
-	friend class DepthRenderer;
-	friend class ShadowRenderer;
 public:
 	D3D() = delete;
 	D3D(HWND hWnd);
@@ -29,6 +22,9 @@ public:
 
 	void SetRenderTargetBackBuffer() { SetRenderTarget(&(_bBuffer), _zBuffer); }
 	void SetBackBufferShaders();
+	void SetRenderTarget(ID3D11RenderTargetView** rtv, ID3D11DepthStencilView* dsv);
+	void SetBuffers();
+	void ConfigureRenderering();
 
 	IDXGISwapChain* GetSwapChain() const { return _swapChain; };
 	IDXGIDevice* GetDXGIDevice() const { return _dxgiDevice; }
@@ -69,7 +65,6 @@ private:
 	void CreateDevice(HWND hWnd);
 	void CreateDepthBuffer();
 	void CreateRenderTarget();
-	void SetRenderTarget(ID3D11RenderTargetView** rtv, ID3D11DepthStencilView* dsv);
 	void SetViewport();
 	void LoadBackBufferShaders();
 	void CreateConstantBuffer();

@@ -20,5 +20,7 @@ struct CBUFFER {
 	DirectX::XMVECTOR ambientColor;
 	float specularPower;
 	DirectX::XMVECTOR specularColor;
+	float downsampledScreenWidth;
+	float downsampledScreenHeight;
 };
 #endif

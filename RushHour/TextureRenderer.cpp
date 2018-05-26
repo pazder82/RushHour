@@ -32,7 +32,7 @@ void TextureRenderer::CreateRenderTextureDepthBuffer() {
 	texd.Usage = D3D11_USAGE_DEFAULT;
 	texd.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 	ID3D11Texture2D *pDepthBuffer;
-	if (FAILED(_d3d->_dev->CreateTexture2D(&texd, NULL, &pDepthBuffer))) {
+	if (FAILED(_d3d->GetDevice()->CreateTexture2D(&texd, NULL, &pDepthBuffer))) {
 		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D depth buffer texture!");
 	}
 
@@ -42,7 +42,7 @@ void TextureRenderer::CreateRenderTextureDepthBuffer() {
 	//dsvd.Format = DXGI_FORMAT_D32_FLOAT;
 	dsvd.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	dsvd.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
-	if (FAILED(_d3d->_dev->CreateDepthStencilView(pDepthBuffer, &dsvd, &(_rtzBuffer)))) {
+	if (FAILED(_d3d->GetDevice()->CreateDepthStencilView(pDepthBuffer, &dsvd, &(_rtzBuffer)))) {
 		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D depth buffer!");
 	}
 	pDepthBuffer->Release();
@@ -68,7 +68,7 @@ void TextureRenderer::CreateRenderTexture() {
 	textureDesc.MiscFlags = 0;
 
 	// Create the render target texture.
-	if (FAILED(_d3d->_dev->CreateTexture2D(&textureDesc, NULL, &renderTexture))) {
+	if (FAILED(_d3d->GetDevice()->CreateTexture2D(&textureDesc, NULL, &renderTexture))) {
 		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D render texture!");
 	}
 
@@ -79,7 +79,7 @@ void TextureRenderer::CreateRenderTexture() {
 	renderTargetViewDesc.Texture2D.MipSlice = 0;
 
 	// Create the render target view.
-	if (FAILED(_d3d->_dev->CreateRenderTargetView(renderTexture, &renderTargetViewDesc, &_rTexture))) {
+	if (FAILED(_d3d->GetDevice()->CreateRenderTargetView(renderTexture, &renderTargetViewDesc, &_rTexture))) {
 		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D render texture target view!");
 	}
 
@@ -91,7 +91,7 @@ void TextureRenderer::CreateRenderTexture() {
 	shaderResourceViewDesc.Texture2D.MipLevels = 1;
 
 	// Create the shader resource view.
-	if (FAILED(_d3d->_dev->CreateShaderResourceView(renderTexture, &shaderResourceViewDesc, &_rTextureSRV))) {
+	if (FAILED(_d3d->GetDevice()->CreateShaderResourceView(renderTexture, &shaderResourceViewDesc, &_rTextureSRV))) {
 		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D render texture shader resource view!");
 	}
 
@@ -99,7 +99,7 @@ void TextureRenderer::CreateRenderTexture() {
 }
 
 void TextureRenderer::SetRenderTextureShaders() {
-	_d3d->_devCon->IASetInputLayout(_rtlayout);
-	_d3d->_devCon->VSSetShader(_rtvs, 0, 0);
-	_d3d->_devCon->PSSetShader(_rtps, 0, 0);
+	_d3d->GetDeviceContext()->IASetInputLayout(_rtlayout);
+	_d3d->GetDeviceContext()->VSSetShader(_rtvs, 0, 0);
+	_d3d->GetDeviceContext()->PSSetShader(_rtps, 0, 0);
 }
