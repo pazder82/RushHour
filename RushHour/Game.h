@@ -7,9 +7,11 @@
 #include "Vehicle.h"
 #include "D2D.h"
 #include "D3D.h"
+#include "Camera.h"
 #include "DepthRenderer.h"
 #include "ShadowRenderer.h"
 #include "OrthoWindow.h"
+#include "OrthoWindowRenderer.h"
 
 #define VEH(X) _vehicles.at(std::string(#X))
 #define MI(X) _minstances.at(std::string(#X))
@@ -52,8 +54,11 @@ private:
 	// DirectX objects
 	D2D* _d2d = nullptr;
 	D3D* _d3d = nullptr;
+	Camera* _camera = nullptr;
 	DepthRenderer* _depthRenderer = nullptr;
 	ShadowRenderer* _shadowRenderer = nullptr;
+	OrthoWindowRenderer* _dsOrthoWindowRenderer = nullptr;
+	OrthoWindowRenderer* _usOrthoWindowRenderer = nullptr;
 	OrthoWindow* _downsampledWindow = nullptr;
 	OrthoWindow* _upsampledWindow = nullptr;
 
@@ -79,6 +84,7 @@ private:
 
 	// Rendering methods
 	void RenderScene(CBUFFER* pcBuffer, DirectX::XMMATRIX matView, DirectX::XMMATRIX matPerspective, DirectX::XMMATRIX lightView, DirectX::XMMATRIX lightPerspective);
+	void RenderOrthoWindow(OrthoWindow* orthoWindow, DirectX::XMMATRIX matView, DirectX::XMMATRIX matPerspective);
 
 	// Active vehicle methods
 	void UpdateMovementStep(); // If some movement activated, update movement step

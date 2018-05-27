@@ -6,15 +6,39 @@
 #include "CommonException.h"
 
 
+using namespace DirectX;
+
 // It creates a simple 2D rectangle object for 2D orthogonal rendering
 OrthoWindow::OrthoWindow(D3D* d3d, UINT windowWidth, UINT windowHeight) : _d3d(d3d), _windowWidth(windowWidth), _windowHeight(windowHeight) {
+	CreateOrthoWindowModel();
+	CreateVertexBuffer();
+	CreateIndexBuffer();
+	CreateConstantBuffer();
+	// Get Orthomatrix for projection
+	_orthoMatrix = XMMatrixOrthographicLH(_windowWidth, _windowHeight, 1.0f, 100.0f);
+/*
+	_cBufferData.downsampledScreenHeight = _windowHeight;
+	_cBufferData.downsampledScreenWidth = _windowWidth;
+	_cBufferData.mvp = _orthoMatrix * ...;
+	_d3d->GetDeviceContext()->UpdateSubresource(GetCBuffer(), 0, 0, &_cBufferData, 0, 0);
+	*/
+}
+
+
+OrthoWindow::~OrthoWindow() {
+	if (_vBuffer) _vBuffer->Release();
+	if (_iBuffer) _iBuffer->Release();
+	if (_cBuffer) _cBuffer->Release();
+}
+
+void OrthoWindow::CreateOrthoWindowModel() {
 	FLOAT left, right, top, bottom;
 
 	// prepare coordinates
-	left = (float)((windowWidth / 2) * -1);
-	right = left + (float)windowWidth;
-	top = (float)(windowHeight / 2);
-	bottom = top - (float)windowHeight;
+	left = (float)((_windowWidth / 2) * -1);
+	right = left + (float)_windowWidth;
+	top = (float)(_windowHeight / 2);
+	bottom = top - (float)_windowHeight;
 
 	// Load the vertex vector with data.
 	_objectVertices.reserve(6);
@@ -49,8 +73,21 @@ OrthoWindow::OrthoWindow(D3D* d3d, UINT windowWidth, UINT windowHeight) : _d3d(d
 
 	// Load the index vector with data
 	_objectIndices.insert(_objectIndices.end(), { 0, 1, 2, 3, 4, 5 });
+}
 
-	// Create a vertex buffer
+void OrthoWindow::CreateConstantBuffer() {
+	// constant buffer
+	D3D11_BUFFER_DESC bd;
+	ZeroMemory(&bd, sizeof(bd));
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(OrthoWindow::CBUFFER);
+	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	if (FAILED(_d3d->GetDevice()->CreateBuffer(&bd, NULL, &_cBuffer))) {
+		throw CommonException((LPWSTR)L"Critical error: Unable to create OrthoWindow constant buffer!");
+	}
+}
+
+void OrthoWindow::CreateVertexBuffer() {
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
 	bd.Usage = D3D11_USAGE_DYNAMIC;
@@ -61,16 +98,17 @@ OrthoWindow::OrthoWindow(D3D* d3d, UINT windowWidth, UINT windowHeight) : _d3d(d
 		throw CommonException((LPWSTR)L"Critical error: Unable to create OrthoWindow vertex buffer!");
 	}
 
-	HRESULT res;
 	// Copy the vertices into the vertex buffer
 	D3D11_MAPPED_SUBRESOURCE ms;
-	if (FAILED(res = _d3d->GetDeviceContext()->Map(_vBuffer, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms))) {
+	if (FAILED(_d3d->GetDeviceContext()->Map(_vBuffer, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms))) {
 		throw CommonException((LPWSTR)L"Critical error: Unable to map OrthoWindow vertex buffer!");
 	}
 	memcpy(ms.pData, _objectVertices.data(), sizeof(VERTEX) * _objectVertices.size());
 	_d3d->GetDeviceContext()->Unmap(_vBuffer, NULL);
+}
 
-	// Create index buffer
+void OrthoWindow::CreateIndexBuffer() {
+	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
 	bd.Usage = D3D11_USAGE_DYNAMIC;
 	bd.ByteWidth = sizeof(VERTEX) * _objectIndices.size();
@@ -81,17 +119,13 @@ OrthoWindow::OrthoWindow(D3D* d3d, UINT windowWidth, UINT windowHeight) : _d3d(d
 	}
 
 	// Copy the indices into the index buffer
+	D3D11_MAPPED_SUBRESOURCE ms;
 	if (FAILED(_d3d->GetDeviceContext()->Map(_iBuffer, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms))) {
 		throw CommonException((LPWSTR)L"Critical error: Unable to map OrthoWindow index buffer!");
 	}
 	memcpy(ms.pData, _objectIndices.data(), sizeof(UINT) * _objectIndices.size());
 	_d3d->GetDeviceContext()->Unmap(_iBuffer, NULL);
-}
 
-
-OrthoWindow::~OrthoWindow() {
-	if (_vBuffer) _vBuffer->Release();
-	if (_iBuffer) _iBuffer->Release();
 }
 
 void OrthoWindow::SetBuffers() {
@@ -100,5 +134,6 @@ void OrthoWindow::SetBuffers() {
 	UINT offset = 0;
 	_d3d->GetDeviceContext()->IASetVertexBuffers(0, 1, GetVBufferAddr(), &stride, &offset);
 	_d3d->GetDeviceContext()->IASetIndexBuffer(GetIBuffer(), DXGI_FORMAT_R32_UINT, 0);
+	_d3d->GetDeviceContext()->VSSetConstantBuffers(0, 1, &_cBuffer);
 }
 

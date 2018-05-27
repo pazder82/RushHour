@@ -1,0 +1,54 @@
+#include "stdafx.h"
+#include <d3dcompiler.h>
+#include "OrthoWindowRenderer.h"
+#include "CommonException.h"
+
+void OrthoWindowRenderer::LoadRenderTextureShaders() {
+	// load and compile vertex and pixel shader
+	ID3D10Blob *VS, *PS;
+	D3DCompileFromFile(L"orthowin.shader", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VShader", "vs_4_0", 0, 0, &VS, NULL);
+	D3DCompileFromFile(L"orthowin.shader", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PShader", "ps_4_0", 0, 0, &PS, NULL);
+	if (FAILED(_d3d->GetDevice()->CreateVertexShader(VS->GetBufferPointer(), VS->GetBufferSize(), NULL, &_rtvs))) {
+		throw CommonException((LPWSTR)L"Critical error: Unable to create OrthoWinRenderer vertex shader!");
+	}
+	if (FAILED(_d3d->GetDevice()->CreatePixelShader(PS->GetBufferPointer(), PS->GetBufferSize(), NULL, &_rtps))) {
+		throw CommonException((LPWSTR)L"Critical error: Unable to create OrthoWinRenderer pixel shader!");
+	}
+
+	// create the input layout object
+	D3D11_INPUT_ELEMENT_DESC ied[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+  	    { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	};
+
+	if (FAILED(_d3d->GetDevice()->CreateInputLayout(ied, 2, VS->GetBufferPointer(), VS->GetBufferSize(), &_rtlayout))) {
+		throw CommonException((LPWSTR)L"Critical error: Unable to create OrthoWinRenderer input layout!");
+	}
+}
+
+void OrthoWindowRenderer::ConfigureRendering() {
+	_orthoWindow->SetBuffers(); // Set Vertex, Index and Constant buffer
+
+	// select which primtive type we are using
+	_d3d->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// select Rasterizer and Sampler configuration
+	_d3d->GetDeviceContext()->RSSetState(_d3d->GetRState());
+	_d3d->GetDeviceContext()->PSSetSamplers(0, 1, _d3d->GetSStateWrapAddr());
+	_d3d->GetDeviceContext()->PSSetSamplers(1, 1, _d3d->GetSStateClampAddr());
+
+	// set render texture as a render target
+	SetRenderTargetRenderTexture();
+	SetRenderTextureShaders();
+
+	// clear the render texture to black
+	FLOAT bgColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	_d3d->GetDeviceContext()->ClearRenderTargetView(GetRenderTexture(), bgColor);
+	// clear depth buffer of render texture
+	_d3d->GetDeviceContext()->ClearDepthStencilView(GetRTZBuffer(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+}
+
+
+

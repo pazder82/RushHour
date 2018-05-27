@@ -10,17 +10,23 @@ using namespace std;
 Game::Game(HWND hWnd) { 
 	_d3d = new D3D(hWnd); 
 	_d2d = new D2D(_d3d); 
+	_camera = new Camera();
 	_depthRenderer = new DepthRenderer(_d3d); 
 	_shadowRenderer = new ShadowRenderer(_d3d); 
 	_downsampledWindow = new OrthoWindow(_d3d, SCREEN_HEIGHT / 2, SCREEN_HEIGHT / 2);
 	_upsampledWindow = new OrthoWindow(_d3d, SCREEN_HEIGHT, SCREEN_HEIGHT);
+	_dsOrthoWindowRenderer = new OrthoWindowRenderer(_d3d, _downsampledWindow);
+	_usOrthoWindowRenderer = new OrthoWindowRenderer(_d3d, _upsampledWindow);
 }
 
 Game::~Game() { 
 	if (_d2d) delete _d2d; 
 	if (_d3d) delete _d3d; 
+	if (_camera) delete _camera; 
 	if (_depthRenderer) delete _depthRenderer;
 	if (_shadowRenderer) delete _shadowRenderer;
+	if (_dsOrthoWindowRenderer) delete _dsOrthoWindowRenderer;
+	if (_usOrthoWindowRenderer) delete _usOrthoWindowRenderer;
 	if (_downsampledWindow) delete _downsampledWindow;
 	if (_upsampledWindow) delete _upsampledWindow;
 }
@@ -230,20 +236,13 @@ void Game::Render() {
 	CBUFFER cBuffer;
 
 	// *** CAMERA SECTION
-	XMMATRIX matView, matPerspective;
-	XMVECTOR camPosition = CAMINITPOSITION;
-	camPosition = XMVector4Transform(camPosition, _rotation);
-
-	// Set View matrix
-	matView = XMMatrixLookAtLH(
-		camPosition,                          // the camera position (rotating around the center of the board)
-		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),  // the look-at position
-		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)   // the up direction
-	);
-	cBuffer.cameraPosition = camPosition;
+	XMMATRIX matView;
+	_camera->SetNewPosition(_rotation);
+	matView = _camera->GetViewMatrix();
+	cBuffer.cameraPosition = _camera->GetCamPosition();
 
 	// Set projection matrix
-	matPerspective = XMMatrixPerspectiveFovLH((FLOAT)XMConvertToRadians(45), (FLOAT)SCREEN_WIDTH / (FLOAT)SCREEN_HEIGHT, 1.0f, 100.0f);
+	XMMATRIX matPerspective = XMMatrixPerspectiveFovLH((FLOAT)XMConvertToRadians(45), (FLOAT)SCREEN_WIDTH / (FLOAT)SCREEN_HEIGHT, 1.0f, 100.0f);
 
 	// *** LIGHTS SECTION
 	XMMATRIX lightView, lightPerspective;
@@ -271,7 +270,14 @@ void Game::Render() {
 	_d3d->GetDeviceContext()->PSSetShaderResources(1, 1, _depthRenderer->GetRenderTextureSRVAddr()); // provide depth texture to shader
 	RenderScene(&cBuffer, matView, matPerspective, lightView, lightPerspective);
 
-	// Render scene
+	// FIXME:
+	// Downsample shadow texture into OrthoWindow
+	_dsOrthoWindowRenderer->ConfigureRendering();
+	_d3d->GetDeviceContext()->PSSetShaderResources(0, 1, _shadowRenderer->GetRenderTextureSRVAddr()); // provide shadow texture to shader
+	RenderOrthoWindow(_downsampledWindow, matView, matPerspective);
+	// FIXME end
+
+	// Render final scene
 	_d3d->ConfigureRenderering();
 	_d3d->GetDeviceContext()->PSSetShaderResources(2, 1, _shadowRenderer->GetRenderTextureSRVAddr()); // provide shadow texture to shader
 	RenderScene(&cBuffer, matView, matPerspective, lightView, lightPerspective);
@@ -281,6 +287,15 @@ void Game::Render() {
 
 	// switch the back buffer and the front buffer
 	_d3d->GetSwapChain()->Present(0, 0);
+}
+
+void Game::RenderOrthoWindow(OrthoWindow* orthoWindow, DirectX::XMMATRIX matView, DirectX::XMMATRIX matPerspective) {
+	OrthoWindow::CBUFFER cBuffer;
+	cBuffer.screenHeight = (float) orthoWindow->GetWindowHeight();
+	cBuffer.screenWidth = (float) orthoWindow->GetWindowWidth();
+	cBuffer.mvp = matView * matPerspective;
+	// Send constant buffer
+	_d3d->GetDeviceContext()->UpdateSubresource(orthoWindow->GetCBuffer(), 0, 0, &cBuffer, 0, 0);
 }
 
 void Game::RenderScene(CBUFFER* pcBuffer, XMMATRIX matView, XMMATRIX matPerspective, XMMATRIX lightView, XMMATRIX lightPerspective) {
