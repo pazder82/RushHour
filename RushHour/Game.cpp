@@ -14,9 +14,9 @@ Game::Game(HWND hWnd) {
 	_depthRenderer = new DepthRenderer(_d3d); 
 	_shadowRenderer = new ShadowRenderer(_d3d); 
 	_downsampledWindow = new OrthoWindow(_d3d, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
-	_upsampledWindow = new OrthoWindow(_d3d, SCREEN_WIDTH, SCREEN_HEIGHT);
+	_fullsizedWindow = new OrthoWindow(_d3d, SCREEN_WIDTH, SCREEN_HEIGHT);
 	_dsOrthoWindowRenderer = new OrthoWindowRenderer(_d3d, _downsampledWindow);
-	_usOrthoWindowRenderer = new OrthoWindowRenderer(_d3d, _upsampledWindow);
+	_fsOrthoWindowRenderer = new OrthoWindowRenderer(_d3d, _fullsizedWindow);
 }
 
 Game::~Game() { 
@@ -26,9 +26,9 @@ Game::~Game() {
 	if (_depthRenderer) delete _depthRenderer;
 	if (_shadowRenderer) delete _shadowRenderer;
 	if (_dsOrthoWindowRenderer) delete _dsOrthoWindowRenderer;
-	if (_usOrthoWindowRenderer) delete _usOrthoWindowRenderer;
+	if (_fsOrthoWindowRenderer) delete _fsOrthoWindowRenderer;
 	if (_downsampledWindow) delete _downsampledWindow;
-	if (_upsampledWindow) delete _upsampledWindow;
+	if (_fullsizedWindow) delete _fullsizedWindow;
 }
 
 // Called once per frame, rotates the cube and calculates the model and view matrices.
@@ -238,8 +238,6 @@ void Game::Render() {
 	// *** CAMERA SECTION
 	XMMATRIX matView;
 	_camera->SetNewPosition(_rotation);
-	_downsampledWindow->SetNewPosition(_rotation);
-	_upsampledWindow->SetNewPosition(_rotation);
 	matView = _camera->GetViewMatrix();
 	cBuffer.cameraPosition = _camera->GetCamPosition();
 
@@ -279,15 +277,15 @@ void Game::Render() {
 	RenderOrthoWindow(_downsampledWindow, _downsampledWindow->GetViewMatrix(), _downsampledWindow->GetOrthoMatrix());
 
 	// Upsample shadow texture into OrthoWindow
-	_usOrthoWindowRenderer->ConfigureRendering();
-	//_usOrthoWindowRenderer->ConfigureRenderingDebug();
+	_fsOrthoWindowRenderer->ConfigureRendering();
+	//_fsOrthoWindowRenderer->ConfigureRenderingDebug();
 	_d3d->GetDeviceContext()->PSSetShaderResources(0, 1, _dsOrthoWindowRenderer->GetRenderTextureSRVAddr()); // provide downsampled texture to shader
-	RenderOrthoWindow(_upsampledWindow, _upsampledWindow->GetViewMatrix(), _upsampledWindow->GetOrthoMatrix());
+	RenderOrthoWindow(_fullsizedWindow, _fullsizedWindow->GetViewMatrix(), _fullsizedWindow->GetOrthoMatrix());
 
 	// Render final scene
 	_d3d->ConfigureRenderering();
-//	_d3d->GetDeviceContext()->PSSetShaderResources(2, 1, _usOrthoWindowRenderer->GetRenderTextureSRVAddr()); // provide upsampled texture to shader
-	_d3d->GetDeviceContext()->PSSetShaderResources(2, 1, _shadowRenderer->GetRenderTextureSRVAddr()); // provide upsampled texture to shader
+	_d3d->GetDeviceContext()->PSSetShaderResources(2, 1, _fsOrthoWindowRenderer->GetRenderTextureSRVAddr()); // provide upsampled texture to shader
+	//_d3d->GetDeviceContext()->PSSetShaderResources(2, 1, _shadowRenderer->GetRenderTextureSRVAddr()); // provide upsampled texture to shader
 	RenderScene(&cBuffer, matView, matPerspective, lightView, lightPerspective);
 /*  FIXME
 */

@@ -5,7 +5,7 @@
 class OrthoWindowRenderer : public TextureRenderer {
 public:
 	OrthoWindowRenderer() = delete;
-	OrthoWindowRenderer(D3D* d3d, OrthoWindow* orthoWindow) : TextureRenderer(d3d), _orthoWindow(orthoWindow) { LoadRenderTextureShaders(); };
+	OrthoWindowRenderer(D3D* d3d, OrthoWindow* orthoWindow);
 	~OrthoWindowRenderer() {};
 
 	void LoadRenderTextureShaders() override;

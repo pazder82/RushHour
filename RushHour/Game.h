@@ -58,9 +58,9 @@ private:
 	DepthRenderer* _depthRenderer = nullptr;
 	ShadowRenderer* _shadowRenderer = nullptr;
 	OrthoWindowRenderer* _dsOrthoWindowRenderer = nullptr;
-	OrthoWindowRenderer* _usOrthoWindowRenderer = nullptr;
+	OrthoWindowRenderer* _fsOrthoWindowRenderer = nullptr;
 	OrthoWindow* _downsampledWindow = nullptr;
-	OrthoWindow* _upsampledWindow = nullptr;
+	OrthoWindow* _fullsizedWindow = nullptr;
 
 
 	// Models and objects containers

@@ -7,7 +7,7 @@
 #include "TextureRenderer.h"
 #include "CommonException.h"
 
-TextureRenderer::TextureRenderer(D3D* d3d) : _d3d(d3d) {
+TextureRenderer::TextureRenderer(D3D * d3d, FLOAT textureWidth, FLOAT textureHeight) : _d3d(d3d), _textureWidth(textureWidth), _textureHeight(textureHeight) {
 	// Create shadow render texture and its zbuffer
 	CreateRenderTextureDepthBuffer();
 	CreateRenderTexture();
@@ -23,8 +23,8 @@ void TextureRenderer::CreateRenderTextureDepthBuffer() {
 	// create the depth buffer texture
 	D3D11_TEXTURE2D_DESC texd;
 	ZeroMemory(&texd, sizeof(texd));
-	texd.Width = SCREEN_WIDTH;
-	texd.Height = SCREEN_HEIGHT;
+	texd.Width = static_cast<UINT>(_textureWidth);
+	texd.Height = static_cast<UINT>(_textureHeight);
 	texd.ArraySize = 1;
 	texd.MipLevels = 1;
 	texd.SampleDesc.Count = 1;
@@ -56,8 +56,8 @@ void TextureRenderer::CreateRenderTexture() {
 	ZeroMemory(&textureDesc, sizeof(textureDesc));
 
 	// Setup the render target texture description.
-	textureDesc.Width = SCREEN_WIDTH;
-	textureDesc.Height = SCREEN_HEIGHT;
+	textureDesc.Width = static_cast<UINT>(_textureWidth);
+	textureDesc.Height = static_cast<UINT>(_textureHeight);
 	textureDesc.MipLevels = 1;
 	textureDesc.ArraySize = 1;
 	textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;

@@ -10,7 +10,8 @@
 class TextureRenderer {
 	public:
 		TextureRenderer() = delete;
-		TextureRenderer(D3D* d3d);
+		TextureRenderer(D3D* d3d, FLOAT textureWidth, FLOAT textureHeight);
+		TextureRenderer(D3D* d3d) : TextureRenderer(d3d, SCREEN_WIDTH, SCREEN_HEIGHT) {}
 		~TextureRenderer();
 
 		ID3D11RenderTargetView* GetRenderTexture() const { return _rTexture; }
@@ -29,6 +30,7 @@ class TextureRenderer {
 		ID3D11VertexShader* _rtvs;              // render texture vertex shader
 		ID3D11PixelShader* _rtps;               // render texture pixel shader
 		ID3D11InputLayout* _rtlayout;           // render texture layout
+		FLOAT _textureWidth, _textureHeight;
 
 		void CreateRenderTextureDepthBuffer();
 		void CreateRenderTexture();

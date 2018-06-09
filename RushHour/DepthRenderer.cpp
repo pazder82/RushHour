@@ -28,6 +28,7 @@ void DepthRenderer::LoadRenderTextureShaders() {
 
 void DepthRenderer::ConfigureRendering() {
 	_d3d->SetBuffers(); // Set default Vertex, Index and Constant buffer
+	_d3d->SetViewport();
 
 	// select which primtive type we are using
 	_d3d->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

@@ -11,7 +11,7 @@ public:
 	~OrthoWindow();
 
 	void SetBuffers();
-	void SetNewPosition(DirectX::XMMATRIX rotation);
+	void SetViewport();
 
 	ID3D11Buffer* GetVBuffer() const { return _vBuffer; }
 	ID3D11Buffer** GetVBufferAddr() { return &(_vBuffer); }
@@ -33,7 +33,6 @@ private:
 	D3D* _d3d;
 	FLOAT _windowWidth, _windowHeight;
 	DirectX::XMMATRIX _orthoMatrix;
-	DirectX::XMVECTOR _camPosition;
 
 	std::vector<VERTEX> _objectVertices;
 	std::vector<UINT> _objectIndices;

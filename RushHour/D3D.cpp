@@ -218,8 +218,8 @@ void D3D::SetViewport() {
 	viewport.TopLeftY = 0;
 	viewport.Width = SCREEN_WIDTH;
 	viewport.Height = SCREEN_HEIGHT;
-	viewport.MinDepth = 0;
-	viewport.MaxDepth = 1;
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
 
 	_devCon->RSSetViewports(1, &viewport);
 }

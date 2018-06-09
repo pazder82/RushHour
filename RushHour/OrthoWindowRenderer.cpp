@@ -3,6 +3,11 @@
 #include "OrthoWindowRenderer.h"
 #include "CommonException.h"
 
+
+OrthoWindowRenderer::OrthoWindowRenderer(D3D* d3d, OrthoWindow* orthoWindow) : TextureRenderer(d3d, orthoWindow->GetWindowWidth(), orthoWindow->GetWindowHeight()), _orthoWindow(orthoWindow) { 
+	LoadRenderTextureShaders(); 
+};
+
 void OrthoWindowRenderer::LoadRenderTextureShaders() {
 	// load and compile vertex and pixel shader
 	ID3D10Blob *VS, *PS;
@@ -30,6 +35,7 @@ void OrthoWindowRenderer::LoadRenderTextureShaders() {
 
 void OrthoWindowRenderer::ConfigureRendering() {
 	_orthoWindow->SetBuffers(); // Set Vertex, Index and Constant buffer
+	_orthoWindow->SetViewport();
 
 	// select which primtive type we are using
 	_d3d->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -53,6 +59,7 @@ void OrthoWindowRenderer::ConfigureRendering() {
 
 void OrthoWindowRenderer::ConfigureRenderingDebug() {
 	_orthoWindow->SetBuffers(); // Set default Vertex, Index and Constant buffer
+	_orthoWindow->SetViewport();
 
 	// select which primtive type we are using
 	_d3d->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

@@ -26,6 +26,7 @@ public:
 	void SetZBufferOn();
 	void SetZBufferOff();
 	void SetBuffers();
+	void SetViewport();
 	void ConfigureRenderering();
 
 	IDXGISwapChain* GetSwapChain() const { return _swapChain; };
@@ -70,7 +71,6 @@ private:
 	void CreateDevice(HWND hWnd);
 	void CreateDepthBuffer();
 	void CreateRenderTarget();
-	void SetViewport();
 	void LoadBackBufferShaders();
 	void CreateConstantBuffer();
 	void InitRasterizer();

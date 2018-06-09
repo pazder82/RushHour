@@ -16,7 +16,6 @@ OrthoWindow::OrthoWindow(D3D* d3d, FLOAT windowWidth, FLOAT windowHeight) : _d3d
 	CreateConstantBuffer();
 	// Get Orthomatrix for projection
 	_orthoMatrix = XMMatrixOrthographicLH((float)_windowWidth, (float)_windowHeight, 0.1f, 1000.0f);
-	_camPosition = CAMINITPOSITION;
 }
 
 
@@ -26,14 +25,9 @@ OrthoWindow::~OrthoWindow() {
 	if (_cBuffer) _cBuffer->Release();
 }
 
-void OrthoWindow::SetNewPosition(DirectX::XMMATRIX rotation) {
-	// The camera for OrthoWindow is static
-	_camPosition = CAMINITPOSITION;
-}
-
 DirectX::XMMATRIX OrthoWindow::GetViewMatrix() const {
 	return XMMatrixLookAtLH(
-		_camPosition,                         // the camera position (rotating around the center of the board)
+		CAMINITPOSITION,
 		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),  // the look-at position
 		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)   // the up direction
 	);
@@ -138,5 +132,20 @@ void OrthoWindow::SetBuffers() {
 	_d3d->GetDeviceContext()->IASetIndexBuffer(GetIBuffer(), DXGI_FORMAT_R32_UINT, 0);
 	_d3d->GetDeviceContext()->VSSetConstantBuffers(0, 1, &_cBuffer);
 	_d3d->SetZBufferOff();
+}
+
+void OrthoWindow::SetViewport() {
+	// set the viewport
+	D3D11_VIEWPORT viewport;
+	ZeroMemory(&viewport, sizeof(D3D11_VIEWPORT));
+
+	viewport.TopLeftX = 0;
+	viewport.TopLeftY = 0;
+	viewport.Width = _windowWidth;
+	viewport.Height = _windowHeight;
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
+
+	_d3d->GetDeviceContext()->RSSetViewports(1, &viewport);
 }
 
