@@ -9,19 +9,14 @@
 using namespace DirectX;
 
 // It creates a simple 2D rectangle object for 2D orthogonal rendering
-OrthoWindow::OrthoWindow(D3D* d3d, UINT windowWidth, UINT windowHeight) : _d3d(d3d), _windowWidth(windowWidth), _windowHeight(windowHeight) {
+OrthoWindow::OrthoWindow(D3D* d3d, FLOAT windowWidth, FLOAT windowHeight) : _d3d(d3d), _windowWidth(windowWidth), _windowHeight(windowHeight) {
 	CreateOrthoWindowModel();
 	CreateVertexBuffer();
 	CreateIndexBuffer();
 	CreateConstantBuffer();
 	// Get Orthomatrix for projection
-	_orthoMatrix = XMMatrixOrthographicLH(_windowWidth, _windowHeight, 1.0f, 100.0f);
-/*
-	_cBufferData.downsampledScreenHeight = _windowHeight;
-	_cBufferData.downsampledScreenWidth = _windowWidth;
-	_cBufferData.mvp = _orthoMatrix * ...;
-	_d3d->GetDeviceContext()->UpdateSubresource(GetCBuffer(), 0, 0, &_cBufferData, 0, 0);
-	*/
+	_orthoMatrix = XMMatrixOrthographicLH((float)_windowWidth, (float)_windowHeight, 0.1f, 1000.0f);
+	_camPosition = CAMINITPOSITION;
 }
 
 
@@ -31,14 +26,28 @@ OrthoWindow::~OrthoWindow() {
 	if (_cBuffer) _cBuffer->Release();
 }
 
+void OrthoWindow::SetNewPosition(DirectX::XMMATRIX rotation) {
+	// The camera for OrthoWindow is static
+	_camPosition = CAMINITPOSITION;
+}
+
+DirectX::XMMATRIX OrthoWindow::GetViewMatrix() const {
+	return XMMatrixLookAtLH(
+		_camPosition,                         // the camera position (rotating around the center of the board)
+		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),  // the look-at position
+		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)   // the up direction
+	);
+
+}
+
 void OrthoWindow::CreateOrthoWindowModel() {
 	FLOAT left, right, top, bottom;
 
 	// prepare coordinates
-	left = (float)((_windowWidth / 2) * -1);
-	right = left + (float)_windowWidth;
-	top = (float)(_windowHeight / 2);
-	bottom = top - (float)_windowHeight;
+	left = (_windowWidth / 2) * -1;
+	right = left + _windowWidth;
+	top = _windowHeight / 2;
+	bottom = top - _windowHeight;
 
 	// Load the vertex vector with data.
 	_objectVertices.reserve(6);
@@ -59,20 +68,20 @@ void OrthoWindow::CreateOrthoWindowModel() {
 	_objectVertices.push_back(v);
 
 	// Second triangle.
-	v.pos = { left, top, 0.0f };
-	v.textCoord = { 0.0f, 0.0f };
-	_objectVertices.push_back(v);
+//	v.pos = { left, top, 0.0f };
+//	v.textCoord = { 0.0f, 0.0f };
+//	_objectVertices.push_back(v);
 
 	v.pos = { right, top, 0.0f };
 	v.textCoord = { 1.0f, 0.0f };
 	_objectVertices.push_back(v);
 
-	v.pos = { right, bottom, 0.0f };
-	v.textCoord = { 1.0f, 1.0f };
-	_objectVertices.push_back(v);
+//	v.pos = { right, bottom, 0.0f };
+//	v.textCoord = { 1.0f, 1.0f };
+//	_objectVertices.push_back(v);
 
 	// Load the index vector with data
-	_objectIndices.insert(_objectIndices.end(), { 0, 1, 2, 3, 4, 5 });
+	_objectIndices.insert(_objectIndices.end(), { 2, 1, 0, 1, 3, 0 });
 }
 
 void OrthoWindow::CreateConstantBuffer() {
@@ -90,42 +99,35 @@ void OrthoWindow::CreateConstantBuffer() {
 void OrthoWindow::CreateVertexBuffer() {
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
-	bd.Usage = D3D11_USAGE_DYNAMIC;
+	bd.Usage = D3D11_USAGE_DEFAULT;
 	bd.ByteWidth = sizeof(VERTEX) * _objectVertices.size();
 	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	if (FAILED(_d3d->GetDevice()->CreateBuffer(&bd, NULL, &_vBuffer))) {
+
+	D3D11_SUBRESOURCE_DATA vertexData;
+	vertexData.pSysMem = _objectVertices.data();
+	vertexData.SysMemPitch = 0;
+	vertexData.SysMemSlicePitch = 0;
+
+	if (FAILED(_d3d->GetDevice()->CreateBuffer(&bd, &vertexData, &_vBuffer))) {
 		throw CommonException((LPWSTR)L"Critical error: Unable to create OrthoWindow vertex buffer!");
 	}
-
-	// Copy the vertices into the vertex buffer
-	D3D11_MAPPED_SUBRESOURCE ms;
-	if (FAILED(_d3d->GetDeviceContext()->Map(_vBuffer, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms))) {
-		throw CommonException((LPWSTR)L"Critical error: Unable to map OrthoWindow vertex buffer!");
-	}
-	memcpy(ms.pData, _objectVertices.data(), sizeof(VERTEX) * _objectVertices.size());
-	_d3d->GetDeviceContext()->Unmap(_vBuffer, NULL);
 }
 
 void OrthoWindow::CreateIndexBuffer() {
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
-	bd.Usage = D3D11_USAGE_DYNAMIC;
-	bd.ByteWidth = sizeof(VERTEX) * _objectIndices.size();
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(UINT) * _objectIndices.size();
 	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	if (FAILED(_d3d->GetDevice()->CreateBuffer(&bd, NULL, &_iBuffer))) {
+
+	D3D11_SUBRESOURCE_DATA indexData;
+	indexData.pSysMem = _objectIndices.data();
+	indexData.SysMemPitch = 0;
+	indexData.SysMemSlicePitch = 0;
+
+	if (FAILED(_d3d->GetDevice()->CreateBuffer(&bd, &indexData, &_iBuffer))) {
 		throw CommonException((LPWSTR)L"Critical error: Unable to create OrthoWindow index buffer!");
 	}
-
-	// Copy the indices into the index buffer
-	D3D11_MAPPED_SUBRESOURCE ms;
-	if (FAILED(_d3d->GetDeviceContext()->Map(_iBuffer, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms))) {
-		throw CommonException((LPWSTR)L"Critical error: Unable to map OrthoWindow index buffer!");
-	}
-	memcpy(ms.pData, _objectIndices.data(), sizeof(UINT) * _objectIndices.size());
-	_d3d->GetDeviceContext()->Unmap(_iBuffer, NULL);
-
 }
 
 void OrthoWindow::SetBuffers() {
@@ -135,5 +137,6 @@ void OrthoWindow::SetBuffers() {
 	_d3d->GetDeviceContext()->IASetVertexBuffers(0, 1, GetVBufferAddr(), &stride, &offset);
 	_d3d->GetDeviceContext()->IASetIndexBuffer(GetIBuffer(), DXGI_FORMAT_R32_UINT, 0);
 	_d3d->GetDeviceContext()->VSSetConstantBuffers(0, 1, &_cBuffer);
+	_d3d->SetZBufferOff();
 }
 

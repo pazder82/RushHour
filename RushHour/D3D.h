@@ -23,6 +23,8 @@ public:
 	void SetRenderTargetBackBuffer() { SetRenderTarget(&(_bBuffer), _zBuffer); }
 	void SetBackBufferShaders();
 	void SetRenderTarget(ID3D11RenderTargetView** rtv, ID3D11DepthStencilView* dsv);
+	void SetZBufferOn();
+	void SetZBufferOff();
 	void SetBuffers();
 	void ConfigureRenderering();
 
@@ -61,6 +63,9 @@ private:
 	ID3D11RasterizerState* _rs;            // the default rasterizer state
 	ID3D11SamplerState* _ssw;               // sampler state wrap
 	ID3D11SamplerState* _ssc;               // sampler state clamp
+	ID3D11DepthStencilState* _depthStencilState;  // depth buffer state
+	ID3D11DepthStencilState* _depthDisabledStencilState;  // depth buffer disabled state
+
 
 	void CreateDevice(HWND hWnd);
 	void CreateDepthBuffer();

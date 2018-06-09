@@ -10,11 +10,11 @@ struct PixelInputType {
 };
 
 /* VERTEX SHADER */
-PixelInputType VShader(float4 position : POSITION, float2 texCoord : TEXCOORD) {
+PixelInputType VShader(float4 position : POSITION, float3 normal : NORMAL, float2 texCoord : TEXCOORD) {
 	PixelInputType output;
 
 	position.w = 1.0f;
-	output.position = mul(position, mvp);
+	output.position = mul(mvp, position);
 	output.texCoord = texCoord;
 
 	return output;
@@ -31,6 +31,7 @@ float4 PShader(PixelInputType input) : SV_TARGET
 
     // Sample the pixel color from the texture using the sampler at this texture coordinate location.
     textureColor = modelTexture.Sample(sampleTypeClamp, input.texCoord);
+//	textureColor = float4(input.texCoord.x, input.texCoord.y, 0, 1);
 
     return textureColor;
 }

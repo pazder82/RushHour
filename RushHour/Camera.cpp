@@ -4,6 +4,7 @@
 using namespace DirectX;
 
 Camera::Camera() {
+	_camPosition = CAMINITPOSITION;
 }
 
 

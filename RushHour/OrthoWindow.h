@@ -7,18 +7,21 @@
 class OrthoWindow {
 public:
 	OrthoWindow() = delete;
-	OrthoWindow(D3D* d3d, UINT windowWidth, UINT windowHeight);
+	OrthoWindow(D3D* d3d, FLOAT windowWidth, FLOAT windowHeight);
 	~OrthoWindow();
 
 	void SetBuffers();
+	void SetNewPosition(DirectX::XMMATRIX rotation);
 
 	ID3D11Buffer* GetVBuffer() const { return _vBuffer; }
 	ID3D11Buffer** GetVBufferAddr() { return &(_vBuffer); }
 	ID3D11Buffer* GetIBuffer() const { return _iBuffer; }
 	ID3D11Buffer* GetCBuffer() const { return _cBuffer; }
-	UINT GetWindowWidth() const { return _windowWidth; }
-	UINT GetWindowHeight() const { return _windowHeight; }
-	DirectX::XMMATRIX GetOrthoMatrix() const { return _orthoMatrix; };
+	FLOAT GetWindowWidth() const { return _windowWidth; }
+	FLOAT GetWindowHeight() const { return _windowHeight; }
+	DirectX::XMMATRIX GetOrthoMatrix() const { return _orthoMatrix; }
+	DirectX::XMMATRIX GetViewMatrix() const;
+	size_t GetNumOfIndices() const { return _objectIndices.size(); }
 
 	struct CBUFFER {
 		DirectX::XMMATRIX mvp;
@@ -28,8 +31,9 @@ public:
 
 private:
 	D3D* _d3d;
-	UINT _windowWidth, _windowHeight;
+	FLOAT _windowWidth, _windowHeight;
 	DirectX::XMMATRIX _orthoMatrix;
+	DirectX::XMVECTOR _camPosition;
 
 	std::vector<VERTEX> _objectVertices;
 	std::vector<UINT> _objectIndices;

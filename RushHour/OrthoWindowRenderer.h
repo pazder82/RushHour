@@ -10,6 +10,7 @@ public:
 
 	void LoadRenderTextureShaders() override;
 	void ConfigureRendering() override;
+	void ConfigureRenderingDebug();
 
 private:
 	OrthoWindow* _orthoWindow;

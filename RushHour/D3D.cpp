@@ -9,6 +9,7 @@ D3D::D3D(HWND hWnd) {
 	CreateDevice(hWnd);
 	// Create backbuffer and its zbuffer
 	CreateDepthBuffer();
+	SetZBufferOn();
 	CreateRenderTarget();
 	SetViewport();
 	LoadBackBufferShaders();
@@ -24,6 +25,8 @@ D3D::~D3D() {
 
 	// release all the stuff
 	if (_zBuffer) _zBuffer->Release();
+	if (_depthDisabledStencilState) _depthDisabledStencilState->Release();
+	if (_depthStencilState) _depthStencilState->Release();
 	if (_layout) _layout->Release();
 	if (_vs) _vs->Release();
 	if (_ps) _ps->Release();
@@ -102,6 +105,58 @@ void D3D::CreateDepthBuffer() {
 		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D depth buffer!");
 	}
 	pDepthBuffer->Release();
+
+	// create depth buffer states
+	// Initialize the description of the stencil state.
+	D3D11_DEPTH_STENCIL_DESC depthStencilDesc;
+	ZeroMemory(&depthStencilDesc, sizeof(depthStencilDesc));
+
+	// Set up the description of the stencil state.
+	depthStencilDesc.DepthEnable = true;
+	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
+	depthStencilDesc.StencilEnable = true;
+	depthStencilDesc.StencilReadMask = 0xFF;
+	depthStencilDesc.StencilWriteMask = 0xFF;
+	depthStencilDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+	depthStencilDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
+	depthStencilDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+	depthStencilDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+	depthStencilDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+	depthStencilDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_DECR;
+	depthStencilDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+	depthStencilDesc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+
+	// Create the depth stencil state.
+	if (FAILED(_dev->CreateDepthStencilState(&depthStencilDesc, &_depthStencilState))) {
+		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D depth buffer state!");
+	}
+
+	D3D11_DEPTH_STENCIL_DESC depthDisabledStencilDesc;
+	ZeroMemory(&depthDisabledStencilDesc, sizeof(depthDisabledStencilDesc));
+
+	// Now create a second depth stencil state which turns off the Z buffer for 2D rendering.  The only difference is 
+	// that DepthEnable is set to false, all other parameters are the same as the other depth stencil state.
+	depthDisabledStencilDesc.DepthEnable = false;
+	depthDisabledStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	depthDisabledStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
+	depthDisabledStencilDesc.StencilEnable = false;
+	depthDisabledStencilDesc.StencilReadMask = 0xFF;
+	depthDisabledStencilDesc.StencilWriteMask = 0xFF;
+	depthDisabledStencilDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+	depthDisabledStencilDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
+	depthDisabledStencilDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+	depthDisabledStencilDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+	depthDisabledStencilDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+	depthDisabledStencilDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_DECR;
+	depthDisabledStencilDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+	depthDisabledStencilDesc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+
+	// Create the state using the device.
+	if (FAILED(_dev->CreateDepthStencilState(&depthDisabledStencilDesc, &_depthDisabledStencilState))) {
+		throw CommonException((LPWSTR)L"Critical error: Unable to create Direct3D depth buffer state!");
+	}
+
 }
 
 void D3D::CreateRenderTarget() {
@@ -128,6 +183,7 @@ void D3D::SetBuffers() {
 	_devCon->IASetIndexBuffer(GetIBuffer(), DXGI_FORMAT_R32_UINT, 0);
 	_devCon->VSSetConstantBuffers(0, 1, &_cBuffer);
 	_devCon->PSSetConstantBuffers(0, 1, &_cBuffer);
+	SetZBufferOn();
 }
 
 void D3D::ConfigureRenderering() {
@@ -199,6 +255,15 @@ void D3D::SetBackBufferShaders() {
 	_devCon->PSSetShader(_ps, 0, 0);
 }
 
+void D3D::SetZBufferOn() {
+	_devCon->OMSetDepthStencilState(_depthStencilState, 1);
+
+}
+
+void D3D::SetZBufferOff() {
+	_devCon->OMSetDepthStencilState(_depthDisabledStencilState, 1);
+}
+
 void D3D::CreateConstantBuffer() {
 	// constant buffer
 	D3D11_BUFFER_DESC bd;
@@ -261,7 +326,7 @@ void D3D::InitRasterizer() {
 	rd.FrontCounterClockwise = TRUE;
 	rd.DepthClipEnable = TRUE;
 	rd.ScissorEnable = FALSE;
-	rd.AntialiasedLineEnable = FALSE;
+	rd.AntialiasedLineEnable = TRUE;
 	rd.MultisampleEnable = FALSE;
 	rd.DepthBias = 0;
 	rd.DepthBiasClamp = 0.0f;
