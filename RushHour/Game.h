@@ -45,6 +45,7 @@ public:
 	bool IsVehicleFreeForMove(std::string idstr) const;
 	bool IsVehicleFreeForMoveForwardOrBackward(std::string idstr, Game::Direction_t dir) const;
 
+	void TestIntersection(LONG x, LONG y);
 	void PrintFps(int fps);
 
 private:

@@ -222,6 +222,11 @@ void Game::UnlockActiveVehicle() {
 	_activeVehicleLock = false;
 }
 
+// Detect object which is displayed on the pixel position defined by x and y
+void Game::TestIntersection(LONG x, LONG y) {
+
+}
+
 // Print current FPS into Direct2 target
 void Game::PrintFps(int fps) {
 	std::wstring s = L"FPS: " + std::to_wstring(fps);
@@ -242,7 +247,7 @@ void Game::Render() {
 	cBuffer.cameraPosition = _camera->GetCamPosition();
 
 	// Set projection matrix
-	XMMATRIX matPerspective = XMMatrixPerspectiveFovLH((FLOAT)XMConvertToRadians(45), (FLOAT)SCREEN_WIDTH / (FLOAT)SCREEN_HEIGHT, 1.0f, 100.0f);
+	XMMATRIX matPerspective = _d3d->GetPerpectiveMatrix();
 
 	// *** LIGHTS SECTION
 	XMMATRIX lightView, lightPerspective;
@@ -284,8 +289,9 @@ void Game::Render() {
 
 	// Render final scene
 	_d3d->ConfigureRenderering();
-	_d3d->GetDeviceContext()->PSSetShaderResources(2, 1, _fsOrthoWindowRenderer->GetRenderTextureSRVAddr()); // provide upsampled texture to shader
-	//_d3d->GetDeviceContext()->PSSetShaderResources(2, 1, _shadowRenderer->GetRenderTextureSRVAddr()); // provide upsampled texture to shader
+	// Use the below line instead of the next when Ortographic projection of shadows is working properly:
+	//_d3d->GetDeviceContext()->PSSetShaderResources(2, 1, _fsOrthoWindowRenderer->GetRenderTextureSRVAddr()); // provide upsampled texture to shader
+	_d3d->GetDeviceContext()->PSSetShaderResources(2, 1, _shadowRenderer->GetRenderTextureSRVAddr()); // provide upsampled texture to shader
 	RenderScene(&cBuffer, matView, matPerspective, lightView, lightPerspective);
 /*  FIXME
 */
@@ -301,7 +307,6 @@ void Game::RenderOrthoWindow(OrthoWindow* orthoWindow, DirectX::XMMATRIX matView
 	cBuffer.screenHeight = (float) orthoWindow->GetWindowHeight();
 	cBuffer.screenWidth = (float) orthoWindow->GetWindowWidth();
 	cBuffer.mvp = XMMatrixIdentity() * matView * matPerspective;
-	//cBuffer.mvp = XMMatrixTranslation(-0.5f, 0.0f, -15.5f) * matView * matPerspective;
 
 	// Send constant buffer
 	_d3d->GetDeviceContext()->UpdateSubresource(orthoWindow->GetCBuffer(), 0, 0, &cBuffer, 0, 0);

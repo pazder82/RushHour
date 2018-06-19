@@ -31,7 +31,6 @@ float4 PShader(PixelInputType input) : SV_TARGET
 
     // Sample the pixel color from the texture using the sampler at this texture coordinate location.
     textureColor = modelTexture.Sample(sampleTypeClamp, input.texCoord);
-//	textureColor = float4(input.texCoord.x, input.texCoord.y, 0, 1);
 
     return textureColor;
 }

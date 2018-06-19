@@ -1,8 +1,10 @@
 #include "stdafx.h"
 #include <d3dcompiler.h>
+#include <DirectXMath.h>
 #include "CommonException.h"
 #include "D3D.h"
 
+using namespace DirectX;
 
 // this method initializes and prepares Direct3D for use
 D3D::D3D(HWND hWnd) {
@@ -16,6 +18,8 @@ D3D::D3D(HWND hWnd) {
 	CreateConstantBuffer();
 	InitRasterizer();
 	InitSampler();
+
+	_matPerspective = XMMatrixPerspectiveFovLH((FLOAT)XMConvertToRadians(45), (FLOAT)SCREEN_WIDTH / (FLOAT)SCREEN_HEIGHT, 1.0f, 100.0f);
 }
 
 
