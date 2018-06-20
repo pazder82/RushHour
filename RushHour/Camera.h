@@ -9,7 +9,7 @@ public:
 
 	void SetNewPosition(DirectX::XMMATRIX rotation);
 
-	DirectX::XMVECTOR GetCamPosition() const { return _camPosition; }
+	DirectX::XMVECTOR GetPosition() const { return _camPosition; }
 	DirectX::XMMATRIX GetViewMatrix() const;
 
 private:

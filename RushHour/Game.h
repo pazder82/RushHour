@@ -45,12 +45,20 @@ public:
 	bool IsVehicleFreeForMove(std::string idstr) const;
 	bool IsVehicleFreeForMoveForwardOrBackward(std::string idstr, Game::Direction_t dir) const;
 
+	// Info text methods
+	void PrintInfoString() const;
+	void AddInfoString(std::wstring wstr);
+	void ClearInfoString();
+
 	void TestIntersection(LONG x, LONG y);
-	void PrintFps(int fps);
 
 private:
 	// Timer vars
 	double _frameTime = 0.0;
+
+	// Info wstring
+	std::wstring _infoString;
+	std::wstring _debugInfoString;
 
 	// DirectX objects
 	D2D* _d2d = nullptr;

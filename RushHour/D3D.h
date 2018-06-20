@@ -45,7 +45,7 @@ public:
 	ID3D11SamplerState** GetSStateWrapAddr() { return &(_ssw); }
 	ID3D11SamplerState* GetSStateClamp() const { return _ssc; }
 	ID3D11SamplerState** GetSStateClampAddr() { return &(_ssc); }
-	DirectX::XMMATRIX GetPerpectiveMatrix() const { return _matPerspective; }
+	DirectX::XMMATRIX GetProjectionMatrix() const { return _matPerspective; }
 
 private:
 	IDXGISwapChain* _swapChain;             // swap chain interface
