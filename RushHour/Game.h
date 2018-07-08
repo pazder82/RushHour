@@ -12,6 +12,7 @@
 #include "ShadowRenderer.h"
 #include "OrthoWindow.h"
 #include "OrthoWindowRenderer.h"
+#include "VehiclePicker.h"
 
 #define VEH(X) _vehicles.at(std::string(#X))
 #define MI(X) _minstances.at(std::string(#X))
@@ -48,9 +49,9 @@ public:
 	// Info text methods
 	void PrintInfoString() const;
 	void AddInfoString(std::wstring wstr);
+	void SetDebugInfoString(std::wstring wstr);
 	void ClearInfoString();
 
-	void TestIntersection(LONG x, LONG y);
 
 private:
 	// Timer vars
@@ -80,6 +81,9 @@ private:
 	// Active vehicle vars
 	std::string _activeVehicle;
 	bool _activeVehicleLock = false;
+
+	// Vehicle picker
+	VehiclePicker* _vehiclePicker = nullptr;
 
 	// World position vars
 	float _rotationAngle = 0;

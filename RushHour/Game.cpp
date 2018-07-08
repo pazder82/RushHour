@@ -11,6 +11,7 @@ Game::Game(HWND hWnd) {
 	_d3d = new D3D(hWnd); 
 	_d2d = new D2D(_d3d); 
 	_camera = new Camera();
+	_vehiclePicker = new VehiclePicker(_d3d, _camera);
 	_depthRenderer = new DepthRenderer(_d3d); 
 	_shadowRenderer = new ShadowRenderer(_d3d); 
 	_downsampledWindow = new OrthoWindow(_d3d, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
@@ -23,6 +24,7 @@ Game::~Game() {
 	if (_d2d) delete _d2d; 
 	if (_d3d) delete _d3d; 
 	if (_camera) delete _camera; 
+	if (_vehiclePicker) delete _vehiclePicker;
 	if (_depthRenderer) delete _depthRenderer;
 	if (_shadowRenderer) delete _shadowRenderer;
 	if (_dsOrthoWindowRenderer) delete _dsOrthoWindowRenderer;
@@ -222,44 +224,6 @@ void Game::UnlockActiveVehicle() {
 	_activeVehicleLock = false;
 }
 
-// Detect object which is displayed on the pixel position of the mouse click 
-void Game::TestIntersection(LONG x, LONG y) {
-	float pointX, pointY;
-	XMVECTOR direction, origin;
-
-	// Move the mouse cursor coordinates into the -1 to +1 range.
-	pointX = ((2.0f * static_cast<float>(x)) / static_cast<float>(SCREEN_WIDTH)) - 1.0f;
-	pointY = (((2.0f * static_cast<float>(y)) / static_cast<float>(SCREEN_HEIGHT)) - 1.0f) * -1.0f;
-
-	// Adjust the points using the projection matrix to account for the aspect ratio of the viewport.
-	XMFLOAT4X4 prMtrx;
-	// Convert projectionMatrix from XMMATRIX into XMFLOAT4X4 in order to pick its members
-	XMStoreFloat4x4(&prMtrx, _d3d->GetProjectionMatrix());
-	pointX = pointX / prMtrx._11;
-	pointY = pointY / prMtrx._22;
-
-	// Get the inverse of the view matrix.
-	XMFLOAT4X4 invViewMtrx;
-	// Convert inverseViewMatrix from XMMATRIX into XMFLOAT4X4 in order to pick its members
-	XMStoreFloat4x4(&invViewMtrx, XMMatrixInverse(nullptr, _camera->GetViewMatrix()));
-
-	// Calculate the direction of the picking ray in view space.
-	XMFLOAT3 dir;
-	dir.x = (pointX * invViewMtrx._11) + (pointY * invViewMtrx._21) + invViewMtrx._31;
-	dir.y = (pointX * invViewMtrx._12) + (pointY * invViewMtrx._22) + invViewMtrx._32;
-	dir.z = (pointX * invViewMtrx._13) + (pointY * invViewMtrx._23) + invViewMtrx._33;
-	direction = XMLoadFloat3(&dir);
-
-	// Get the origin of the picking ray which is the position of the camera.
-	origin = _camera->GetPosition();
-
-	// DEBUG
-	XMFLOAT3 orig;
-	XMStoreFloat3(&orig, origin);
-	_debugInfoString = L" * DEBUG: origin (" + to_wstring(orig.x) + L"," + to_wstring(orig.y) + L"," + to_wstring(orig.z) +
-		L"), direction (" + to_wstring(dir.x) + L"," + to_wstring(dir.y) + L"," + to_wstring(dir.z) + L")";
-}
-
 // Print info text
 void Game::PrintInfoString() const {
 	wstring s = _infoString + _debugInfoString;
@@ -275,6 +239,10 @@ void Game::ClearInfoString() {
 
 void Game::AddInfoString(wstring wstr) {
 	_infoString += wstr;
+}
+
+void Game::SetDebugInfoString(std::wstring wstr) {
+	_debugInfoString = wstr;
 }
 
 // Renders one frame using the vertex and pixel shaders.
@@ -590,6 +558,8 @@ void Game::Init() {
 	_d3d->CreateVertexBuffer(Model::GetModelVertices());
 	_d3d->CreateIndexBuffer(Model::GetModelIndices());
 
+	// Configure VehiclePicker
+	_vehiclePicker->InitBoundingBoxes(&_vehicles);
 
 }
 
