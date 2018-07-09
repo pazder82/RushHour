@@ -3,6 +3,7 @@
 #include <DirectXCollision.h>
 #include <vector>
 #include <map>
+#include <memory>
 #include "D3D.h"
 #include "Camera.h"
 #include "Vehicle.h"
@@ -28,6 +29,7 @@ private:
 
 	// Vector of vehicle boundig boxes
 	std::vector<DirectX::BoundingBox> _vehicleBBs;
+	std::vector<DirectX::XMFLOAT3> GetXMFLOAT3VectorFromModelVertices(const std::vector<VERTEX>& modelVertices) const;
 
 };
 

@@ -39,20 +39,25 @@ void VehiclePicker::SetPickingRay(LONG mouseX, LONG mouseY) {
 	_pickingRayOrigin = _camera->GetPosition();
 }
 
-void VehiclePicker::InitBoundingBoxes(std::map<std::string, Vehicle>* pVehicles) {
-	// Extract pointers to all vehicles
-	vector<Vehicle*> vehicles;
-	vehicles.reserve(pVehicles->size());
-	for (auto vehicle : *pVehicles) {
-		vehicles.push_back(&(vehicle.second));
+// Convert modelVertices into array of XMFLOAT3
+vector<XMFLOAT3> VehiclePicker::GetXMFLOAT3VectorFromModelVertices(const std::vector<VERTEX>& modelVertices) const {
+	vector<XMFLOAT3> xmfloatVector;
+	xmfloatVector.reserve(modelVertices.size());
+	for (auto modelVertex : modelVertices) {
+		xmfloatVector.push_back(modelVertex.pos);
 	}
+	return xmfloatVector;
+}
 
+// Create bounding box for each displayed vehicle
+void VehiclePicker::InitBoundingBoxes(std::map<std::string, Vehicle>* pVehicles) {
 	// Create bounding boxes for all displayed vehicles
-	_vehicleBBs.reserve(vehicles.size());
-	for (Vehicle* vehicle : vehicles) {
-		if (!vehicle->IsHidden()) {
-			BoundingBox bb;
-			//vehicle->GetMo
+	for (auto vehicle : *pVehicles) {
+		if (!(vehicle.second.IsHidden())) {
+			DirectX::BoundingBox bb;
+			// FIXME: multiple the vertex positions by GetTransformation * Game::_worldOffset
+			BoundingBox::CreateFromPoints(bb, vehicle.second.GetModel().GetModelVertices().size(), GetXMFLOAT3VectorFromModelVertices(vehicle.second.GetModel().GetModelVertices()).data(), sizeof(XMFLOAT3));
+			_vehicleBBs.push_back(bb);
 		}
 	}
 }
