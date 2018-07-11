@@ -11,7 +11,7 @@ Game::Game(HWND hWnd) {
 	_d3d = new D3D(hWnd); 
 	_d2d = new D2D(_d3d); 
 	_camera = new Camera();
-	_vehiclePicker = new VehiclePicker(_d3d, _camera);
+	_vehiclePicker = new VehiclePicker(_d3d, _camera, _worldOffset);
 	_depthRenderer = new DepthRenderer(_d3d); 
 	_shadowRenderer = new ShadowRenderer(_d3d); 
 	_downsampledWindow = new OrthoWindow(_d3d, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);

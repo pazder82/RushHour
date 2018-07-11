@@ -1,3 +1,4 @@
+#pragma once
 #include <vector>
 #include <map>
 #include <string>
@@ -22,7 +23,6 @@
 #define BOARD_MAX_COORD 2
 #define BOARD_MIN_COORD -3
 
-#pragma once
 class Game {
 public:
 	Game() = delete;
@@ -51,6 +51,9 @@ public:
 	void AddInfoString(std::wstring wstr);
 	void SetDebugInfoString(std::wstring wstr);
 	void ClearInfoString();
+
+	// Vehicle picker
+	VehiclePicker* GetVehiclePicker() const { return _vehiclePicker; }
 
 
 private:
