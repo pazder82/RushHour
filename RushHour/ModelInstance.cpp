@@ -10,7 +10,7 @@ ModelInstance::ModelInstance(Model & m, DirectX::XMMATRIX scale, DirectX::XMVECT
 	_rotation = rotation;
 }
 
-void ModelInstance::SetPosition(Coords_t coords) {
+void ModelInstance::SetPosition(Coords2i_t coords) {
 	_position = coords;
 }
 

@@ -46,11 +46,11 @@ DirectX::XMMATRIX Vehicle::GetInitRotation() const {
 }
 
 // Returns true if this instance is occupying position pos
-bool Vehicle::IsOccupyingPosition(Coords_t pos) const {
+bool Vehicle::IsOccupyingPosition(Coords2i_t pos) const {
 	if (IsHidden()) {
 		return false;
 	}
-	Coords_t p = GetPosition();
+	Coords2i_t p = GetPosition();
 	for (unsigned short i = 0; i < _length; i++) {
 		if ((p.x == pos.x) && (p.z == pos.z)) {
 			return true;

@@ -14,6 +14,7 @@
 #include "OrthoWindow.h"
 #include "OrthoWindowRenderer.h"
 #include "VehiclePicker.h"
+#include "Marker.h"
 
 #define VEH(X) _vehicles.at(std::string(#X))
 #define MI(X) _minstances.at(std::string(#X))
@@ -80,6 +81,7 @@ private:
 	std::map<std::string, Model> _models;
 	std::map<std::string, ModelInstance> _minstances;
 	std::map<std::string, Vehicle> _vehicles;
+	std::map<std::string, Marker> _markers;
 
 	// Active vehicle vars
 	std::string _activeVehicle;
@@ -95,7 +97,7 @@ private:
 	DirectX::XMMATRIX _worldOffset = DirectX::XMMatrixTranslation(0.5f, 0.0f, 0.5f);
 
 	// Color settings vars
-	const float _ambientColorIntensity = 0.25;
+	const float _ambientColorIntensity = 0.75;
 	bool _glowLevelUp = true;
 
 	// Rendering methods

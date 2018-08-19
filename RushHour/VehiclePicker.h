@@ -22,6 +22,9 @@ public:
 	// Test picking ray intersection with _vehicleBBs and return the closest one in bb if found
 	bool GetHitVehicle(std::string& v) const;
 
+	std::wstring GetDebugString() const { return _dbgString; }
+	Coords3f_t GetDebugPosition() const { return _dbgPos; }
+
 private:
 
 	// DirectX objects
@@ -39,6 +42,11 @@ private:
 
 	// Methods
 	std::vector<DirectX::XMFLOAT3> GetXMFLOAT3VectorFromModelVertices(const std::vector<VERTEX>& modelVertices) const;
+
+	// Debug stuff
+    std::wstring _dbgString;
+	void SetDebugString(std::wstring s) { _dbgString = s; }
+	Coords3f_t _dbgPos = { 0.0f, 0.0f, 0.0f };
 
 };
 

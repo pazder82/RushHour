@@ -28,7 +28,7 @@ public:
 	void SetGlowLevel(float glowLevel) { _glowLevel = glowLevel; }
 
 	// Collision testing methods
-	bool IsOccupyingPosition(Coords_t pos) const;
+	bool IsOccupyingPosition(Coords2i_t pos) const;
 	unsigned short GetLength() const { return _length; }
 
 	// Other methods

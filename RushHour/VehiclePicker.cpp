@@ -16,6 +16,7 @@ void VehiclePicker::SetPickingRay(LONG mouseX, LONG mouseY) {
 	// Move the mouse cursor coordinates into the -1 to +1 range.
 	pointX = ((2.0f * static_cast<float>(mouseX)) / static_cast<float>(SCREEN_WIDTH)) - 1.0f;
 	pointY = (((2.0f * static_cast<float>(mouseY)) / static_cast<float>(SCREEN_HEIGHT)) - 1.0f) * -1.0f;
+	SetDebugString(L", X: " + std::to_wstring(pointX) + L", Y:" + std::to_wstring(pointY));
 
 	// Adjust the points using the projection matrix to account for the aspect ratio of the viewport.
 	XMFLOAT4X4 prMtrx;
@@ -35,9 +36,16 @@ void VehiclePicker::SetPickingRay(LONG mouseX, LONG mouseY) {
 	dir.y = (pointX * invViewMtrx._12) + (pointY * invViewMtrx._22) + invViewMtrx._32;
 	dir.z = (pointX * invViewMtrx._13) + (pointY * invViewMtrx._23) + invViewMtrx._33;
 	_pickingRayDirection = XMLoadFloat3(&dir);
+	_dbgPos = { dir.x, dir.y, dir.z };
 
 	// Get the origin of the picking ray which is the position of the camera.
 	_pickingRayOrigin = _camera->GetPosition();
+
+	// Now transform the ray origin and the ray direction from view space to world space.
+	XMMATRIX invWorldOffset = XMMatrixInverse(nullptr, XMMatrixIdentity());
+	_pickingRayOrigin = XMVector3Transform(_pickingRayOrigin, invWorldOffset);
+	_pickingRayDirection = XMVector3Transform(_pickingRayDirection, invWorldOffset);
+	_pickingRayDirection = XMVector3Normalize(_pickingRayDirection);
 }
 
 bool VehiclePicker::GetHitVehicle(string& v) const {
@@ -68,6 +76,26 @@ vector<XMFLOAT3> VehiclePicker::GetXMFLOAT3VectorFromModelVertices(const std::ve
 
 // Create bounding box for each displayed vehicle
 void VehiclePicker::InitBoundingBoxes(std::map<std::string, Vehicle>* pVehicles) {
+	// DEBUG
+	XMFLOAT3 dbgPoints[6];
+	dbgPoints[0] = { 1.0f, 0.0f, 0.0f };
+	dbgPoints[1] = { 0.0f, 1.0f, 0.0f };
+	dbgPoints[2] = { 0.0f, 0.0f, 1.0f };
+	dbgPoints[3] = { 0.0f, 0.0f, -1.0f };
+	dbgPoints[4] = { 0.0f, -1.0f, 0.0f };
+	dbgPoints[5] = { -1.0f, 0.0f, 0.0f };
+	BoundingBox dbgBb;
+	BoundingBox::CreateFromPoints(dbgBb, 6, dbgPoints, sizeof(XMFLOAT3));
+//	dbgBb.Transform(dbgBb, XMMatrixTranslation(1.0f, 0.0f, 0.0f));
+	XMFLOAT3 dbgCorners[BoundingBox::CORNER_COUNT];
+	dbgBb.GetCorners(dbgCorners);
+	XMVECTOR dbgRayOrigin = { 0.0f, 0.0f, 2.0f, 1.0f };
+	XMVECTOR dbgRayDir = { 0.0f, 0.0f, -1.0f };
+	float dbgF;
+	bool dbgRes;
+	dbgRes = dbgBb.Intersects(dbgRayOrigin, dbgRayDir, dbgF);
+	// DEBUG END
+
 	// Create bounding boxes for all displayed vehicles
 	for (auto vehicle : *pVehicles) {
 		if (!(vehicle.second.IsHidden())) {

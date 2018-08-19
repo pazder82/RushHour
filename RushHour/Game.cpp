@@ -3,6 +3,7 @@
 #include "Game.h"
 #include "D3D.h"
 #include "CommonException.h"
+#include "Marker.h"
 
 using namespace DirectX;
 using namespace std;
@@ -38,6 +39,11 @@ void Game::Update(double frameTime) {
 	_frameTime = frameTime;
 	UpdateMovementStep();
 	UpdateGlowLevel();
+
+	// Update markers
+	if (_markers.find("marker1") != _markers.end()) {
+		_markers.at("marker1").SetPosition(_vehiclePicker->GetDebugPosition());
+	}
 }
 
 // Rotate the 3D scene a set amount of radians.
@@ -129,9 +135,9 @@ bool Game::IsVehicleFreeForMoveForwardOrBackward(std::string idstr, Game::Direct
 			continue;
 		}
 		const Vehicle& mi2 = it.second;
-		Coords_t testCoords;
+		Coords2i_t testCoords;
 		int c = (dir == Game::Forward) ? mi1.GetLength() : -1;
-		Coords_t p = mi1.GetPosition();
+		Coords2i_t p = mi1.GetPosition();
 		int newx, newz;
 		if (mi1.GetOrientation() == Vehicle::XAxis) {
 			newx = p.x + c;
@@ -157,7 +163,7 @@ void Game::UpdateMovementStep() {
 		return;
 	}
 	Vehicle& mi = _vehicles.at(GetActiveVehicle());
-	Coords_t coords = mi.GetPosition();
+	Coords2i_t coords = mi.GetPosition();
 
 	float newMovementStep;
 	int dirCoef;
@@ -387,6 +393,32 @@ void Game::RenderScene(CBUFFER* pcBuffer, XMMATRIX matView, XMMATRIX matPerspect
 		}
 	}
 
+	// Draw markers
+	for (auto it = _markers.begin(); it != _markers.end(); it++) {
+		Marker mi = it->second;
+		if (mi.IsHidden()) {
+			continue;
+		}
+		// Store marker transformation into constant buffer
+		XMMATRIX worldMatrix = mi.GetTransformation() * _worldOffset;
+		XMMATRIX mvpMatrix = worldMatrix * matView * matPerspective;
+		XMMATRIX lightMvpMatrix = worldMatrix * lightView * lightPerspective;
+		XMMATRIX invTrWorld = XMMatrixInverse(nullptr, XMMatrixTranspose(worldMatrix));
+		pcBuffer->world = worldMatrix;
+		pcBuffer->mvp = mvpMatrix;
+		pcBuffer->lightmvp = lightMvpMatrix;
+		pcBuffer->invTrWorld = invTrWorld;
+		pcBuffer->specularPower = 100000.0f;
+		// Send constant buffer
+		_d3d->GetDeviceContext()->UpdateSubresource(_d3d->GetCBuffer(), 0, 0, pcBuffer, 0, 0);
+
+		for (auto i : mi.GetModel().GetMeshEntries()) {
+			// select texture
+			_d3d->GetDeviceContext()->PSSetShaderResources(0, 1, &i._pTexture);
+			_d3d->GetDeviceContext()->DrawIndexed(i._numIndices, i._baseIndex, i._baseVertex);
+		}
+	}
+
 }
 
 void Game::Init() {
@@ -395,6 +427,7 @@ void Game::Init() {
 	_models.emplace(make_pair(string("car"), Model("models/taxi_cab.obj", _d3d->GetDevice())));
 	_models.emplace(make_pair(string("board"), Model("models/board.3DS", _d3d->GetDevice())));
 	_models.emplace(make_pair(string("wall"), Model("models/oldWall.obj", _d3d->GetDevice())));
+	_models.emplace(make_pair(string("ball"), Model("models/10536_soccerball_V1_iterations-2.obj", _d3d->GetDevice())));
 
 	// Create base model instances
 	const float carScale = 0.0075f;
@@ -402,16 +435,21 @@ void Game::Init() {
 	const float boardScale1 = 1.0f;
 	const float boardScale2 = 0.73f;
 	const float wallScale = 0.1253f;
+	const float ballScale = 0.05f;
 	Vehicle miCar(_models.at("car"), XMMatrixScaling(carScale, carScale, carScale), XMVectorSet(0.5f, 0.0f, 0.0f, 0.0f), false, CARLEN);
 	Vehicle miBus(_models.at("bus"), XMMatrixScaling(busScale, busScale, busScale), XMVectorSet(1.2f, 0.0f, 0.0f, 0.0f), true, BUSLEN);
 	ModelInstance miBoard(_models.at("board"), XMMatrixScaling(boardScale1, boardScale1, boardScale2), XMVectorSet(-0.5f, -0.23f, -0.38f, 0.0f), XMMatrixRotationX(XMConvertToRadians(90.0f)));
 	ModelInstance miWallZ(_models.at("wall"), XMMatrixScaling(wallScale, wallScale, wallScale), XMVectorSet(0.57f, -0.0f, 0.49f, 0.0f), XMMatrixIdentity());
 	ModelInstance miWallX(_models.at("wall"), XMMatrixScaling(wallScale, wallScale, wallScale), XMVectorSet(0.55f, -0.0f, 0.64f, 0.0f), XMMatrixIdentity());
+	Marker marker(_models.at("ball"), XMMatrixScaling(ballScale, ballScale, ballScale));
 
 	// Create base board as copy of base instance miBoard
 	_minstances.insert(make_pair(string("board"), miBoard));
 	MI(board).SetPosition(0, 0);
 	MI(board).SetOrientation(ModelInstance::XAxis);
+
+	// Create markers
+	_markers.insert(make_pair(string("marker1"), marker));
 
 	// Create walls as copies of base instance miWall
 	// Wall side 1
