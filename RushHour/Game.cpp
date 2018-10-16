@@ -400,7 +400,7 @@ void Game::RenderScene(CBUFFER* pcBuffer, XMMATRIX matView, XMMATRIX matPerspect
 			continue;
 		}
 		// Store marker transformation into constant buffer
-		XMMATRIX worldMatrix = mi.GetTransformation() * _worldOffset;
+		XMMATRIX worldMatrix = mi.GetTransformation();
 		XMMATRIX mvpMatrix = worldMatrix * matView * matPerspective;
 		XMMATRIX lightMvpMatrix = worldMatrix * lightView * lightPerspective;
 		XMMATRIX invTrWorld = XMMatrixInverse(nullptr, XMMatrixTranspose(worldMatrix));
@@ -435,7 +435,7 @@ void Game::Init() {
 	const float boardScale1 = 1.0f;
 	const float boardScale2 = 0.73f;
 	const float wallScale = 0.1253f;
-	const float ballScale = 0.05f;
+	const float ballScale = 0.01f;
 	Vehicle miCar(_models.at("car"), XMMatrixScaling(carScale, carScale, carScale), XMVectorSet(0.5f, 0.0f, 0.0f, 0.0f), false, CARLEN);
 	Vehicle miBus(_models.at("bus"), XMMatrixScaling(busScale, busScale, busScale), XMVectorSet(1.2f, 0.0f, 0.0f, 0.0f), true, BUSLEN);
 	ModelInstance miBoard(_models.at("board"), XMMatrixScaling(boardScale1, boardScale1, boardScale2), XMVectorSet(-0.5f, -0.23f, -0.38f, 0.0f), XMMatrixRotationX(XMConvertToRadians(90.0f)));

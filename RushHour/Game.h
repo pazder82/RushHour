@@ -97,7 +97,7 @@ private:
 	DirectX::XMMATRIX _worldOffset = DirectX::XMMatrixTranslation(0.5f, 0.0f, 0.5f);
 
 	// Color settings vars
-	const float _ambientColorIntensity = 0.75;
+	const float _ambientColorIntensity = 0.45;
 	bool _glowLevelUp = true;
 
 	// Rendering methods

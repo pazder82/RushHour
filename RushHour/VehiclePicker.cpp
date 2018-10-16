@@ -13,39 +13,28 @@ VehiclePicker::~VehiclePicker() {
 void VehiclePicker::SetPickingRay(LONG mouseX, LONG mouseY) {
 	float pointX, pointY;
 
-	// Move the mouse cursor coordinates into the -1 to +1 range.
+	// Transform mouse cursor from viewport coordinates into normalised device coordinates (into the -1 to +1 range)
 	pointX = ((2.0f * static_cast<float>(mouseX)) / static_cast<float>(SCREEN_WIDTH)) - 1.0f;
 	pointY = (((2.0f * static_cast<float>(mouseY)) / static_cast<float>(SCREEN_HEIGHT)) - 1.0f) * -1.0f;
-	SetDebugString(L", X: " + std::to_wstring(pointX) + L", Y:" + std::to_wstring(pointY));
-
-	// Adjust the points using the projection matrix to account for the aspect ratio of the viewport.
-	XMFLOAT4X4 prMtrx;
-	// Convert projectionMatrix from XMMATRIX into XMFLOAT4X4 in order to pick its members
-	XMStoreFloat4x4(&prMtrx, _d3d->GetProjectionMatrix());
-	pointX = pointX / prMtrx._11;
-	pointY = pointY / prMtrx._22;
-
-	// Get the inverse of the view matrix.
-	XMFLOAT4X4 invViewMtrx;
-	// Convert inverseViewMatrix from XMMATRIX into XMFLOAT4X4 in order to pick its members
-	XMStoreFloat4x4(&invViewMtrx, XMMatrixInverse(nullptr, _camera->GetViewMatrix()));
-
-	// Calculate the direction of the picking ray in view space.
-	XMFLOAT3 dir;
-	dir.x = (pointX * invViewMtrx._11) + (pointY * invViewMtrx._21) + invViewMtrx._31;
-	dir.y = (pointX * invViewMtrx._12) + (pointY * invViewMtrx._22) + invViewMtrx._32;
-	dir.z = (pointX * invViewMtrx._13) + (pointY * invViewMtrx._23) + invViewMtrx._33;
-	_pickingRayDirection = XMLoadFloat3(&dir);
-	_dbgPos = { dir.x, dir.y, dir.z };
-
-	// Get the origin of the picking ray which is the position of the camera.
+	// Transform into homogeneous clip space
+	XMFLOAT4 ray_clip = { pointX, pointY, 1.0, 1.0 };
+	XMVECTOR ray_clip_v = XMLoadFloat4(&ray_clip);
+	// Transform into eye (camera) space
+	XMMATRIX invProjMtrx = XMMatrixInverse(nullptr, _d3d->GetProjectionMatrix());
+	XMVECTOR ray_eye_v = XMVector4Transform(ray_clip_v, invProjMtrx);
+	// Unproject x,y components, so set the z,w part to mean "forwards, and not a point". 
+	XMFLOAT4 ray_eye;
+	XMStoreFloat4(&ray_eye, ray_eye_v);
+	ray_eye = { ray_eye.x, ray_eye.y, 1.0, 0.0 };
+	ray_eye_v = XMLoadFloat4(&ray_eye);
+	// Transform into world space
+	XMMATRIX invViewMtrx = XMMatrixInverse(nullptr, _camera->GetViewMatrix());
+	XMFLOAT4 ray_wrld;
+	XMStoreFloat4(&ray_wrld, XMVector4Transform(ray_eye_v, invViewMtrx));
+	// Cast the "picking" ray from camera position in the direction defined by normalized direction vector
+	XMVECTOR ray_wrld_v = XMLoadFloat3(&XMFLOAT3(ray_wrld.x, ray_wrld.y, ray_wrld.z));
+	_pickingRayDirection = XMVector3Normalize(ray_wrld_v);
 	_pickingRayOrigin = _camera->GetPosition();
-
-	// Now transform the ray origin and the ray direction from view space to world space.
-	XMMATRIX invWorldOffset = XMMatrixInverse(nullptr, XMMatrixIdentity());
-	_pickingRayOrigin = XMVector3Transform(_pickingRayOrigin, invWorldOffset);
-	_pickingRayDirection = XMVector3Transform(_pickingRayDirection, invWorldOffset);
-	_pickingRayDirection = XMVector3Normalize(_pickingRayDirection);
 }
 
 bool VehiclePicker::GetHitVehicle(string& v) const {
