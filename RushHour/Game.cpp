@@ -39,11 +39,6 @@ void Game::Update(double frameTime) {
 	_frameTime = frameTime;
 	UpdateMovementStep();
 	UpdateGlowLevel();
-
-	// Update markers
-	if (_markers.find("marker1") != _markers.end()) {
-		_markers.at("marker1").SetPosition(_vehiclePicker->GetDebugPosition());
-	}
 }
 
 // Rotate the 3D scene a set amount of radians.
@@ -449,7 +444,7 @@ void Game::Init() {
 	MI(board).SetOrientation(ModelInstance::XAxis);
 
 	// Create markers
-	_markers.insert(make_pair(string("marker1"), marker));
+	//_markers.insert(make_pair(string("marker1"), marker));
 
 	// Create walls as copies of base instance miWall
 	// Wall side 1

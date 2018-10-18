@@ -47,6 +47,8 @@ bool VehiclePicker::GetHitVehicle(string& v) const {
 				minDistance = distance;
 				v = vehicleBB.first;
 				found = true;
+				// TODO:
+				// DirectX::TriangleTests::Intersects()
 			}
 		}
 	}
@@ -65,32 +67,17 @@ vector<XMFLOAT3> VehiclePicker::GetXMFLOAT3VectorFromModelVertices(const std::ve
 
 // Create bounding box for each displayed vehicle
 void VehiclePicker::InitBoundingBoxes(std::map<std::string, Vehicle>* pVehicles) {
-	// DEBUG
-	XMFLOAT3 dbgPoints[6];
-	dbgPoints[0] = { 1.0f, 0.0f, 0.0f };
-	dbgPoints[1] = { 0.0f, 1.0f, 0.0f };
-	dbgPoints[2] = { 0.0f, 0.0f, 1.0f };
-	dbgPoints[3] = { 0.0f, 0.0f, -1.0f };
-	dbgPoints[4] = { 0.0f, -1.0f, 0.0f };
-	dbgPoints[5] = { -1.0f, 0.0f, 0.0f };
-	BoundingBox dbgBb;
-	BoundingBox::CreateFromPoints(dbgBb, 6, dbgPoints, sizeof(XMFLOAT3));
-//	dbgBb.Transform(dbgBb, XMMatrixTranslation(1.0f, 0.0f, 0.0f));
-	XMFLOAT3 dbgCorners[BoundingBox::CORNER_COUNT];
-	dbgBb.GetCorners(dbgCorners);
-	XMVECTOR dbgRayOrigin = { 0.0f, 0.0f, 2.0f, 1.0f };
-	XMVECTOR dbgRayDir = { 0.0f, 0.0f, -1.0f };
-	float dbgF;
-	bool dbgRes;
-	dbgRes = dbgBb.Intersects(dbgRayOrigin, dbgRayDir, dbgF);
-	// DEBUG END
-
 	// Create bounding boxes for all displayed vehicles
 	for (auto vehicle : *pVehicles) {
 		if (!(vehicle.second.IsHidden())) {
 			// Get bounding box of the model without transformation
 			DirectX::BoundingBox bb;
-			BoundingBox::CreateFromPoints(bb, vehicle.second.GetModel().GetModelVertices().size(), GetXMFLOAT3VectorFromModelVertices(vehicle.second.GetModel().GetModelVertices()).data(), sizeof(XMFLOAT3));
+			// BUS bounding boxes are for some reason created too big - it helps to divide number of vertices with a magic number ;)
+			int modelVerticesDivisor = 1; // for normal object do not divide
+			if (vehicle.first.substr(0,3) == "bus") {
+				modelVerticesDivisor = 4; // for bus, divide by magic number
+			}
+			BoundingBox::CreateFromPoints(bb, vehicle.second.GetModel().GetModelVertices().size()/modelVerticesDivisor, GetXMFLOAT3VectorFromModelVertices(vehicle.second.GetModel().GetModelVertices()).data(), sizeof(XMFLOAT3));
 			bb.Transform(bb, vehicle.second.GetTransformation() * _worldOffset);
 			_vehicleBBs.insert(make_pair(vehicle.first, bb));
 		}

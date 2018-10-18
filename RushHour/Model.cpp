@@ -35,7 +35,6 @@ Model::Model(const char* pFile, ID3D11Device* dev) {
 						VERTEX v;
 						v.pos.x = pPos->x; v.pos.y = pPos->y; v.pos.z = pPos->z;
 						v.normal.x = pNormal->x; v.normal.y = pNormal->y; v.normal.z = pNormal->z;
-						//v.normal.x = 1.0f; v.normal.y = 0.0f; v.normal.z = 0.0f;
 						v.textCoord.x = pTexCoord->x; v.textCoord.y = pTexCoord->y;
 						Model::_objectVertices.push_back(v);
 					}
