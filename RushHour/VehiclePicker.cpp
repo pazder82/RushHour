@@ -47,10 +47,35 @@ bool VehiclePicker::GetHitVehicle(string& v) const {
 				minDistance = distance;
 				v = vehicleBB.first;
 				found = true;
-				// TODO:
-				// DirectX::TriangleTests::Intersects()
 			}
 		}
+/*
+		// Bounding box hit, now check all triangles
+		Vehicle vehicle = _pVehicles->at(vehicleBB.first);
+		vector<UINT> indices = vehicle.GetModel().GetModelIndices();
+		auto i = indices.begin();
+		while (i != indices.end()) {
+			VERTEX v1, v2, v3;
+			XMMATRIX tm = vehicle.GetTransformation() * _worldOffset;
+			v1 = vehicle.GetModel().GetModelVertices().at(*(i++));
+			v2 = vehicle.GetModel().GetModelVertices().at(*(i++));
+			v3 = vehicle.GetModel().GetModelVertices().at(*(i++));
+			if (DirectX::TriangleTests::Intersects(_pickingRayOrigin, _pickingRayDirection,
+				XMVector3Transform(XMLoadFloat3(&v1.pos), tm),
+				XMVector3Transform(XMLoadFloat3(&v2.pos), tm),
+				XMVector3Transform(XMLoadFloat3(&v3.pos), tm),
+				distance2)) {
+				if (distance2 < minDistance) {
+					minDistance = distance2;
+					v = vehicleBB.first;
+					found = true;
+					break; // We found THE triangle, we don't need to check the others
+				}
+			}
+		}
+	}
+*/
+
 	}
 	return found;
 }
@@ -67,8 +92,10 @@ vector<XMFLOAT3> VehiclePicker::GetXMFLOAT3VectorFromModelVertices(const std::ve
 
 // Create bounding box for each displayed vehicle
 void VehiclePicker::InitBoundingBoxes(std::map<std::string, Vehicle>* pVehicles) {
+	_pVehicles = pVehicles;
+	_vehicleBBs.clear();
 	// Create bounding boxes for all displayed vehicles
-	for (auto vehicle : *pVehicles) {
+	for (auto vehicle : *_pVehicles) {
 		if (!(vehicle.second.IsHidden())) {
 			// Get bounding box of the model without transformation
 			DirectX::BoundingBox bb;
@@ -82,5 +109,16 @@ void VehiclePicker::InitBoundingBoxes(std::map<std::string, Vehicle>* pVehicles)
 			_vehicleBBs.insert(make_pair(vehicle.first, bb));
 		}
 	}
+}
+
+void VehiclePicker::UpdateBoundingBox(std::string vehicleName) {
+	int modelVerticesDivisor = 1; // for normal object do not divide
+	if (vehicleName.substr(0,3) == "bus") {
+		modelVerticesDivisor = 4; // for bus, divide by magic number
+	}
+	DirectX::BoundingBox bb;
+	BoundingBox::CreateFromPoints(bb, _pVehicles->at(vehicleName).GetModel().GetModelVertices().size()/modelVerticesDivisor, GetXMFLOAT3VectorFromModelVertices(_pVehicles->at(vehicleName).GetModel().GetModelVertices()).data(), sizeof(XMFLOAT3));
+	bb.Transform(bb, _pVehicles->at(vehicleName).GetTransformation() * _worldOffset);
+	_vehicleBBs[vehicleName] = bb;
 }
 

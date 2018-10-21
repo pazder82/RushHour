@@ -19,6 +19,7 @@ public:
 
 	// Generate bounding boxes from all vehicles
 	void InitBoundingBoxes(std::map<std::string, Vehicle>* pVehicles);
+	void UpdateBoundingBox(std::string vehicleName);
 	void SetPickingRay(LONG mouseX, LONG mouseY);
 
 	// Test picking ray intersection with _vehicleBBs and return the closest one in bb if found
@@ -41,6 +42,9 @@ private:
 
 	// Picking ray
 	DirectX::XMVECTOR _pickingRayOrigin, _pickingRayDirection;
+
+	// Pointer to all Vehicles
+	std::map<std::string, Vehicle>* _pVehicles;
 
 	// Vector of vehicle bounding boxes
 	std::map<std::string, DirectX::BoundingBox> _vehicleBBs;

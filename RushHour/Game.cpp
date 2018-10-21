@@ -176,7 +176,7 @@ void Game::UpdateMovementStep() {
 	}
 
 	if (abs(newMovementStep) >= 1.0f) {
-		// vehicle finished its move to new position, so replace movementStep with new vehicle position
+		// vehicle finished its move to new position, so replace movementStep with new vehicle position and update its BoundingBox
 		if (mi.GetOrientation() == Vehicle::XAxis) {
 			mi.SetPosition(coords.x + dirCoef, coords.z);
 		} else { // (mi.GetOrientation() == Vehicle::ZAxis)
@@ -187,6 +187,7 @@ void Game::UpdateMovementStep() {
 		UnlockActiveVehicle();
 	}
 	mi.SetMovementStep(newMovementStep);
+	_vehiclePicker->UpdateBoundingBox(GetActiveVehicle());
 }
 
 // Update glow level of active vehicle blinking
