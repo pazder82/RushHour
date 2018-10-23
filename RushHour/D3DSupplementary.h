@@ -9,6 +9,9 @@ struct VERTEX {
 	DirectX::XMFLOAT3 normal;
 	DirectX::XMFLOAT2 textCoord;
 };
+struct VVERTEX { 
+	DirectX::XMVECTOR posv;
+};
 struct CBUFFER {
 	DirectX::XMMATRIX world;
 	DirectX::XMMATRIX mvp;

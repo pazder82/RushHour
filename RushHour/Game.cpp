@@ -275,6 +275,7 @@ void Game::Render() {
 	// Set light projection matrix
 	lightPerspective = XMMatrixPerspectiveFovLH((FLOAT)XMConvertToRadians(45), (FLOAT)SCREEN_WIDTH / (FLOAT)SCREEN_HEIGHT, 1.0f, 100.0f);
 
+#define USESOFTSHADOW    // undefine to use basic shadows
 	// *** RENDER SECTION
 	// Render depth texture
 	_depthRenderer->ConfigureRendering();
@@ -286,6 +287,7 @@ void Game::Render() {
 	_d3d->GetDeviceContext()->PSSetShaderResources(1, 1, _depthRenderer->GetRenderTextureSRVAddr()); // provide depth texture to shader
 	RenderScene(&cBuffer, matView, matPerspective, lightView, lightPerspective);
 
+#ifdef USESOFTSHADOW
 	// Downsample shadow texture into OrthoWindow
 	_dsOrthoWindowRenderer->ConfigureRendering();
 	//_dsOrthoWindowRenderer->ConfigureRenderingDebug();
@@ -297,14 +299,18 @@ void Game::Render() {
 	//_fsOrthoWindowRenderer->ConfigureRenderingDebug();
 	_d3d->GetDeviceContext()->PSSetShaderResources(0, 1, _dsOrthoWindowRenderer->GetRenderTextureSRVAddr()); // provide downsampled texture to shader
 	RenderOrthoWindow(_fullsizedWindow, _fullsizedWindow->GetViewMatrix(), _fullsizedWindow->GetOrthoMatrix());
+#endif
 
 	// Render final scene
 	_d3d->ConfigureRenderering();
 	// Use the below line instead of the next when Ortographic projection of shadows is working properly:
-	//_d3d->GetDeviceContext()->PSSetShaderResources(2, 1, _fsOrthoWindowRenderer->GetRenderTextureSRVAddr()); // provide upsampled texture to shader
-	_d3d->GetDeviceContext()->PSSetShaderResources(2, 1, _shadowRenderer->GetRenderTextureSRVAddr()); // provide upsampled texture to shader
+#ifdef USESOFTSHADOW
+	_d3d->GetDeviceContext()->PSSetShaderResources(2, 1, _fsOrthoWindowRenderer->GetRenderTextureSRVAddr()); // use soft shadow (provide upsampled texture to shader)
+#else
+	_d3d->GetDeviceContext()->PSSetShaderResources(2, 1, _shadowRenderer->GetRenderTextureSRVAddr());        // use basic shadow
+#endif
 	RenderScene(&cBuffer, matView, matPerspective, lightView, lightPerspective);
-/*  FIXME
+/*
 */
 	// print FPS info
 	_d2d->PrintInfo();
@@ -553,7 +559,7 @@ void Game::Init() {
 	_vehicles.insert(make_pair(string("bus4"), miBus));
 
 	// Set color of each vehicle
-	VEH(car1).SetColor(XMUINT3{ 255, 0, 0 }); // Player's car
+	VEH(car1).SetColor(XMUINT3{ UINT(255 * CARLIGHTINTENSITY), 0, 0 }); // Player's car
 
 	/* DEBUG - umistovani instanci bude resit trida Level */
 	// Positon vehicles into the grid

@@ -33,6 +33,7 @@ private:
 
 	/* Common vertex and index buffer for all models */
 	static std::vector<VERTEX> _objectVertices;
+	static std::vector<VVERTEX> _objectVVertices;
 	static std::vector<UINT> _objectIndices;
 
 	std::vector<MeshEntry> _entries; // metadata for model instance
@@ -52,6 +53,7 @@ public:
 	const std::vector<MeshEntry> GetMeshEntries() const { return _entries; }
 
 	static const std::vector<VERTEX> GetModelVertices() { return _objectVertices; }
+	static const std::vector<VVERTEX> GetModelVVertices() { return _objectVVertices; }
 	static const std::vector<UINT> GetModelIndices() { return _objectIndices; };
 
 };

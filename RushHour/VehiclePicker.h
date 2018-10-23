@@ -9,8 +9,6 @@
 #include "Camera.h"
 #include "Vehicle.h"
 
-#define PICKINGRAYLEN 10
-
 class VehiclePicker {
 public:
 	VehiclePicker() = delete;
@@ -26,10 +24,6 @@ public:
 	bool GetHitVehicle(std::string& v) const;
 
 	std::wstring GetDebugString() const { return _dbgString; }
-	Coords3f_t GetDebugPosition() const { return { _pickingRayOrigin.m128_f32[0] + PICKINGRAYLEN*_pickingRayDirection.m128_f32[0], 
-		_pickingRayOrigin.m128_f32[1] + PICKINGRAYLEN*_pickingRayDirection.m128_f32[1],
-	    _pickingRayOrigin.m128_f32[2] + PICKINGRAYLEN*_pickingRayDirection.m128_f32[2] };
-	}
 
 private:
 

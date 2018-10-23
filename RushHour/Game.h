@@ -94,10 +94,11 @@ private:
 	float _rotationAngle = 0;
 	DirectX::XMMATRIX _rotation = DirectX::XMMatrixIdentity();
 	// as we index model position on grid in interval <-3, 2>, we need to move the board to be kept in the middle of the screen
-	DirectX::XMMATRIX _worldOffset = DirectX::XMMatrixTranslation(0.5f, 0.0f, 0.5f);
+	//DirectX::XMMATRIX _worldOffset = DirectX::XMMatrixTranslation(0.5f, 0.0f, 0.5f);
+	DirectX::XMMATRIX _worldOffset = DirectX::XMMatrixTranslation(0.0f, 0.0f, 0.0f);
 
 	// Color settings vars
-	const float _ambientColorIntensity = 0.45;
+	const float _ambientColorIntensity = AMBIENTCOLORINTENSITY;
 	bool _glowLevelUp = true;
 
 	// Rendering methods

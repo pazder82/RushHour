@@ -8,6 +8,7 @@ using namespace std;
 using namespace DirectX;
 
 std::vector<VERTEX> Model::_objectVertices;
+std::vector<VVERTEX> Model::_objectVVertices;
 std::vector<UINT> Model::_objectIndices;
 
 Model::Model(const char* pFile, ID3D11Device* dev) {
@@ -33,10 +34,13 @@ Model::Model(const char* pFile, ID3D11Device* dev) {
 						const aiVector3D* pNormal = (_pMesh->mNormals != nullptr) ? &(_pMesh->mNormals[i]) : &Zero3D;
 						const aiVector3D* pTexCoord = (_pMesh->HasTextureCoords(0)) ? &(_pMesh->mTextureCoords[0][i]) : &Zero3D;
 						VERTEX v;
+						VVERTEX vv;
 						v.pos.x = pPos->x; v.pos.y = pPos->y; v.pos.z = pPos->z;
+						vv.posv = XMLoadFloat3(&v.pos);
 						v.normal.x = pNormal->x; v.normal.y = pNormal->y; v.normal.z = pNormal->z;
 						v.textCoord.x = pTexCoord->x; v.textCoord.y = pTexCoord->y;
 						Model::_objectVertices.push_back(v);
+						Model::_objectVVertices.push_back(vv);
 					}
 
 					// Load indices

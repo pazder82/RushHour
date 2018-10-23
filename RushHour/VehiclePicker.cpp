@@ -37,45 +37,57 @@ void VehiclePicker::SetPickingRay(LONG mouseX, LONG mouseY) {
 	_pickingRayOrigin = _camera->GetPosition();
 }
 
+//#define TRIANGLETEST    // if defined, use triangles hit detection after bounding box hit
+//#define INDICESTEST     // if defined, detect hit triangles generated with use of indices
 bool VehiclePicker::GetHitVehicle(string& v) const {
 	float minDistance = (numeric_limits<float>::max)();
 	bool found = false;
 	for (auto vehicleBB : _vehicleBBs) {
 		float distance;
 		if (vehicleBB.second.Intersects(_pickingRayOrigin, _pickingRayDirection, distance)) {
+#ifdef TRIANGLETEST
+			// Bounding box hit, now check all triangles
+			float distance2;
+			Vehicle vehicle = _pVehicles->at(vehicleBB.first);
+			vector<UINT> indices = vehicle.GetModel().GetModelIndices();
+			auto vertices = vehicle.GetModel().GetModelVVertices();
+			XMMATRIX tm = vehicle.GetTransformation() * _worldOffset;
+#ifdef INDICESTEST
+			auto i = indices.begin();
+			while (i != indices.end()) {
+				XMVECTOR v1, v2, v3;
+				v1 = vehicle.GetModel().GetModelVVertices().at(*(i++)).posv;
+				v2 = vehicle.GetModel().GetModelVVertices().at(*(i++)).posv;
+				v3 = vehicle.GetModel().GetModelVVertices().at(*(i++)).posv;
+#else
+			auto i = vertices.begin();
+			while (i != vertices.end()) {
+				XMVECTOR v1, v2, v3;
+				v1 = (*(i++)).posv;
+				if (i == vertices.end()) break;
+				v2 = (*(i++)).posv;
+				if (i == vertices.end()) break;
+				v3 = (*(i++)).posv;
+#endif
+				v1 = XMVector3Transform(v1, tm);
+				v2 = XMVector3Transform(v2, tm);
+				v3 = XMVector3Transform(v3, tm);
+				if (DirectX::TriangleTests::Intersects(_pickingRayOrigin, _pickingRayDirection, v1, v2, v3, distance2)) {
+					if (distance2 < minDistance) {
+						minDistance = distance2;
+						v = vehicleBB.first;
+						found = true;
+					}
+				}
+			}
+#else
 			if (distance < minDistance) {
 				minDistance = distance;
 				v = vehicleBB.first;
 				found = true;
 			}
+#endif
 		}
-/*
-		// Bounding box hit, now check all triangles
-		Vehicle vehicle = _pVehicles->at(vehicleBB.first);
-		vector<UINT> indices = vehicle.GetModel().GetModelIndices();
-		auto i = indices.begin();
-		while (i != indices.end()) {
-			VERTEX v1, v2, v3;
-			XMMATRIX tm = vehicle.GetTransformation() * _worldOffset;
-			v1 = vehicle.GetModel().GetModelVertices().at(*(i++));
-			v2 = vehicle.GetModel().GetModelVertices().at(*(i++));
-			v3 = vehicle.GetModel().GetModelVertices().at(*(i++));
-			if (DirectX::TriangleTests::Intersects(_pickingRayOrigin, _pickingRayDirection,
-				XMVector3Transform(XMLoadFloat3(&v1.pos), tm),
-				XMVector3Transform(XMLoadFloat3(&v2.pos), tm),
-				XMVector3Transform(XMLoadFloat3(&v3.pos), tm),
-				distance2)) {
-				if (distance2 < minDistance) {
-					minDistance = distance2;
-					v = vehicleBB.first;
-					found = true;
-					break; // We found THE triangle, we don't need to check the others
-				}
-			}
-		}
-	}
-*/
-
 	}
 	return found;
 }
